@@ -66,7 +66,8 @@ Float Dictionary
    :maxdepth: 2
    :caption: Contents:
 
-   Dynamically Allocated Vectors <Vector>
+   Vectors and Arrays <Vector>
+   Generic Macros <Macros>
 
 Indices and tables
 ##################

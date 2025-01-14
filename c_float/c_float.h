@@ -288,6 +288,45 @@ void swap_float(float* a, float* b);
 *         Sets errno to EINVAL if vec is NULL or invalid
 */
 void sort_float_vector(float_v* vec, iter_dir direction);
+// ================================================================================ 
+// ================================================================================ 
+
+/**
+ * @macro f_size
+ * @brief Generic macro to get the number of elements in a float container
+ *
+ * This generic macro provides a unified interface for getting the current number
+ * of elements in any float container type. It automatically selects the appropriate
+ * size function based on the container type.
+ * Currently supported container types:
+ * - float_v (calls float_vector_size)
+ * Additional container types will be added as the library expands.
+ *
+ * @param f_struct Pointer to float container structure
+ * @return Size (number of elements) in the container
+ *         Returns LONG_MAX and sets errno to EINVAL for invalid input
+ */
+#define f_size(f_struct) _Generic((f_struct), \
+    float_v*: float_vector_size) (f_struct)
+// --------------------------------------------------------------------------------
+
+/**
+ * @macro f_alloc
+ * @brief Generic macro to get the allocation size of a float container
+ *
+ * This generic macro provides a unified interface for getting the current allocation
+ * size in any float container type. It automatically selects the appropriate
+ * allocation function based on the container type.
+ * Currently supported container types:
+ * - float_v (calls float_vector_alloc)
+ * Additional container types will be added as the library expands.
+ *
+ * @param f_struct Pointer to float container structure
+ * @return Allocation size (capacity) of the container
+ *         Returns LONG_MAX and sets errno to EINVAL for invalid input
+ */
+#define f_alloc(f_struct) _Generic((f_struct), \
+    float_v*: float_vector_alloc) (f_struct)
 // ================================================================================
 // ================================================================================ 
 #ifdef __cplusplus

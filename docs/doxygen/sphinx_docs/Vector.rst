@@ -179,3 +179,74 @@ FLTVEC_GBC
       This macro should only be used with dynamically allocated vectors created by
       init_float_vector(). It is not needed for static arrays created with
       init_float_array() as they are automatically cleaned up when going out of scope.
+
+[Previous content remains the same until "Automatic Cleanup" section...]
+
+Utility Functions
+=================
+The following functions and macros can be used to retrieve basic information from
+float containers.
+
+Vector Size and Access Functions
+--------------------------------
+The following functions and macros are used to determine the allocated size and populated
+length of float containers.
+
+.. _float-size-func:
+
+float_vector_size
+~~~~~~~~~~~~~~~~~
+.. c:function:: const size_t float_vector_size(const float_v* vec)
+
+   Returns the current number of elements in the vector. This represents the
+   actual number of floats stored, not the allocated capacity. 
+   The :ref:`f_alloc <f-alloc-macro>` generic macro can be used in place of this 
+   function. 
+
+   :param vec: Float vector to query
+   :returns: Number of elements in vector, or LONG_MAX on error
+   :raises: Sets errno to EINVAL for NULL input or invalid data pointer
+
+   Example:
+
+   .. code-block:: c
+
+      float_v* vec FLTVEC_GBC = init_float_vector(5);  // Capacity of 5
+      push_back_float_vector(vec, 1);
+      push_back_float_vector(vec, 2);
+      push_back_float_vector(vec, 3);
+      printf("Vector size: %zu\n", float_vector_size(vec));
+
+   Result 
+
+   .. code-block:: bash 
+
+      Vector size: 3
+
+.. _float-alloc-func:
+
+float_vector_alloc
+~~~~~~~~~~~~~~~~~~
+.. c:function:: const size_t float_vector_alloc(const float_v* vec)
+
+   Returns the current allocation size (capacity) of the vector. This represents
+   the number of elements that can be stored without requiring reallocation.
+   The :ref:`f_alloc <f-alloc-macro>` generic macro can be used in place of this 
+   function.
+
+   :param vec: Float vector to query
+   :returns: Current allocation size, or LONG_MAX on error
+   :raises: Sets errno to EINVAL for NULL input or invalid data pointer
+
+   Example:
+
+   .. code-block:: c
+
+      float_v* vec FLTVEC_GBC = init_float_vector(5);
+      printf("Allocation size: %zu\n", float_vector_alloc(vec));
+
+   Result 
+
+   .. code-block:: bash 
+
+      Allocation size: 5
