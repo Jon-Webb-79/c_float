@@ -32,6 +32,16 @@ int main(int argc, const char * argv[]) {
         #if defined(__GNUC__) || defined(__clang__)
             cmocka_unit_test(test_float_vector_gbc),
         #endif
+        cmocka_unit_test(test_push_back_basic),
+        cmocka_unit_test(test_push_back_growth),
+        cmocka_unit_test(test_push_back_static),
+        cmocka_unit_test(test_generic_macros),
+        cmocka_unit_test(test_float_vector_index),
+        cmocka_unit_test(test_push_back_special_values),
+        cmocka_unit_test(test_static_array_bounds),
+        cmocka_unit_test(test_static_array_index_bounds),
+        cmocka_unit_test(test_static_array_initialization),
+        cmocka_unit_test(test_static_array_free)
 	};
 	return cmocka_run_group_tests(test_one, NULL, NULL);
 }

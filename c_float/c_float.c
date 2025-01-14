@@ -73,7 +73,7 @@ void _free_float_vector(float_v** vec) {
 // -------------------------------------------------------------------------------- 
 
 bool push_back_float_vector(float_v* vec, const float value) {
-    if (!vec || !vec->data || !value) {
+    if (vec == NULL|| vec->data == NULL) {
         errno = EINVAL;
         return false;
     }
@@ -112,7 +112,7 @@ bool push_back_float_vector(float_v* vec, const float value) {
 // --------------------------------------------------------------------------------
 
 bool push_front_float_vector(float_v* vec, const float value) {
-    if (!vec || !vec->data || !value) {
+    if (!vec || !vec->data) {
         errno = EINVAL;
         return false;
     }
