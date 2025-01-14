@@ -315,6 +315,280 @@ void test_static_array_free(void **state) {
 }
 // ================================================================================ 
 // ================================================================================ 
+
+void test_push_front_basic(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(2);
+    assert_non_null(vec);
+    
+    // Test basic push_front
+    assert_true(push_front_float_vector(vec, 3.14f));
+    assert_int_equal(f_size(vec), 1);
+    assert_float_equal(float_vector_index(vec, 0), 3.14f, 0.0001f);
+    
+    // Test adding zero
+    assert_true(push_front_float_vector(vec, 0.0f));
+    assert_int_equal(f_size(vec), 2);
+    assert_float_equal(float_vector_index(vec, 0), 0.0f, 0.0001f);
+    assert_float_equal(float_vector_index(vec, 1), 3.14f, 0.0001f);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_push_front_growth(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(2);
+    assert_non_null(vec);
+    size_t initial_alloc = f_alloc(vec);
+    
+    // Fill to capacity
+    assert_true(push_front_float_vector(vec, 1.0f));
+    assert_true(push_front_float_vector(vec, 2.0f));
+    assert_int_equal(f_size(vec), 2);
+    assert_int_equal(f_alloc(vec), initial_alloc);
+    
+    // Verify order
+    assert_float_equal(float_vector_index(vec, 0), 2.0f, 0.0001f);
+    assert_float_equal(float_vector_index(vec, 1), 1.0f, 0.0001f);
+    
+    // Trigger growth
+    assert_true(push_front_float_vector(vec, 3.0f));
+    assert_int_equal(f_size(vec), 3);
+    assert_true(f_alloc(vec) > initial_alloc);
+    
+    // Verify all elements after growth
+    assert_float_equal(float_vector_index(vec, 0), 3.0f, 0.0001f);
+    assert_float_equal(float_vector_index(vec, 1), 2.0f, 0.0001f);
+    assert_float_equal(float_vector_index(vec, 2), 1.0f, 0.0001f);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_push_front_static(void **state) {
+    (void) state;
+    
+    float_v arr = init_float_array(2);
+    
+    // Test basic push_front with static array
+    assert_true(push_front_float_vector(&arr, 1.0f));
+    assert_true(push_front_float_vector(&arr, 2.0f));
+    assert_int_equal(f_size(&arr), 2);
+    
+    // Verify order
+    assert_float_equal(float_vector_index(&arr, 0), 2.0f, 0.0001f);
+    assert_float_equal(float_vector_index(&arr, 1), 1.0f, 0.0001f);
+    
+    // Attempt to exceed capacity
+    assert_false(push_front_float_vector(&arr, 3.0f));
+    assert_int_equal(errno, EINVAL);
+    
+    // Verify data wasn't corrupted
+    assert_int_equal(f_size(&arr), 2);
+    assert_float_equal(float_vector_index(&arr, 0), 2.0f, 0.0001f);
+    assert_float_equal(float_vector_index(&arr, 1), 1.0f, 0.0001f);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_push_front_special_values(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(3);
+    assert_non_null(vec);
+    
+    // Test infinity
+    assert_true(push_front_float_vector(vec, INFINITY));
+    assert_true(isinf(float_vector_index(vec, 0)));
+    
+    // Test negative infinity
+    assert_true(push_front_float_vector(vec, -INFINITY));
+    assert_true(isinf(float_vector_index(vec, 0)));
+    
+    // Test NaN
+    assert_true(push_front_float_vector(vec, NAN));
+    assert_true(isnan(float_vector_index(vec, 0)));
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_push_front_error_cases(void **state) {
+    (void) state;
+    
+    // Test NULL vector
+    assert_false(push_front_float_vector(NULL, 1.0f));
+    assert_int_equal(errno, EINVAL);
+    
+    // Test with invalid data pointer
+    float_v vec = {0};
+    vec.data = NULL;
+    assert_false(push_front_float_vector(&vec, 1.0f));
+    assert_int_equal(errno, EINVAL);
+}
+// ================================================================================ 
+// ================================================================================
+
+void test_insert_vector_basic(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(4);
+    assert_non_null(vec);
+    
+    // Insert into empty vector
+    assert_true(insert_float_vector(vec, 1.0f, 0));
+    assert_int_equal(f_size(vec), 1);
+    assert_float_equal(float_vector_index(vec, 0), 1.0f, 0.0001f);
+    
+    // Insert at beginning (shifting right)
+    assert_true(insert_float_vector(vec, 0.0f, 0));
+    assert_int_equal(f_size(vec), 2);
+    assert_float_equal(float_vector_index(vec, 0), 0.0f, 0.0001f);
+    assert_float_equal(float_vector_index(vec, 1), 1.0f, 0.0001f);
+    
+    // Insert in middle
+    assert_true(insert_float_vector(vec, 0.5f, 1));
+    assert_int_equal(f_size(vec), 3);
+    assert_float_equal(float_vector_index(vec, 0), 0.0f, 0.0001f);
+    assert_float_equal(float_vector_index(vec, 1), 0.5f, 0.0001f);
+    assert_float_equal(float_vector_index(vec, 2), 1.0f, 0.0001f);
+    
+    // Insert at end (append)
+    assert_true(insert_float_vector(vec, 2.0f, 3));
+    assert_int_equal(f_size(vec), 4);
+    assert_float_equal(float_vector_index(vec, 3), 2.0f, 0.0001f);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_insert_vector_growth(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(2);
+    assert_non_null(vec);
+    size_t initial_alloc = f_alloc(vec);
+    
+    // Fill initial capacity
+    assert_true(insert_float_vector(vec, 1.0f, 0));
+    assert_true(insert_float_vector(vec, 2.0f, 1));
+    assert_int_equal(f_size(vec), 2);
+    assert_int_equal(f_alloc(vec), initial_alloc);
+    
+    // Trigger growth
+    assert_true(insert_float_vector(vec, 1.5f, 1));
+    assert_int_equal(f_size(vec), 3);
+    assert_true(f_alloc(vec) > initial_alloc);
+    
+    // Verify all elements after growth
+    assert_float_equal(float_vector_index(vec, 0), 1.0f, 0.0001f);
+    assert_float_equal(float_vector_index(vec, 1), 1.5f, 0.0001f);
+    assert_float_equal(float_vector_index(vec, 2), 2.0f, 0.0001f);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_insert_array_basic(void **state) {
+    (void) state;
+    
+    float_v arr = init_float_array(3);
+    
+    // Test basic insertions
+    assert_true(insert_float_vector(&arr, 1.0f, 0));
+    assert_true(insert_float_vector(&arr, 3.0f, 1));
+    assert_true(insert_float_vector(&arr, 2.0f, 1));
+    
+    // Verify order
+    assert_int_equal(f_size(&arr), 3);
+    assert_float_equal(float_vector_index(&arr, 0), 1.0f, 0.0001f);
+    assert_float_equal(float_vector_index(&arr, 1), 2.0f, 0.0001f);
+    assert_float_equal(float_vector_index(&arr, 2), 3.0f, 0.0001f);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_insert_array_bounds(void **state) {
+    (void) state;
+    
+    float_v arr = init_float_array(2);
+    
+    // Fill array
+    assert_true(insert_float_vector(&arr, 1.0f, 0));
+    assert_true(insert_float_vector(&arr, 2.0f, 1));
+    
+    // Try to insert beyond capacity
+    errno = 0;
+    assert_false(insert_float_vector(&arr, 3.0f, 1));
+    assert_int_equal(errno, EINVAL);
+    
+    // Verify data wasn't corrupted
+    assert_int_equal(f_size(&arr), 2);
+    assert_float_equal(float_vector_index(&arr, 0), 1.0f, 0.0001f);
+    assert_float_equal(float_vector_index(&arr, 1), 2.0f, 0.0001f);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_insert_error_cases(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(2);
+    assert_non_null(vec);
+    
+    // Test invalid index
+    errno = 0;
+    assert_false(insert_float_vector(vec, 1.0f, 1));  // Empty vector
+    assert_int_equal(errno, ERANGE);
+    
+    // Add one element and test bounds
+    assert_true(insert_float_vector(vec, 1.0f, 0));
+    
+    errno = 0;
+    assert_false(insert_float_vector(vec, 2.0f, 2));  // Beyond length
+    assert_int_equal(errno, ERANGE);
+    
+    // Test NULL vector
+    errno = 0;
+    assert_false(insert_float_vector(NULL, 1.0f, 0));
+    assert_int_equal(errno, EINVAL);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_insert_special_values(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(3);
+    assert_non_null(vec);
+    
+    // Insert infinity
+    assert_true(insert_float_vector(vec, INFINITY, 0));
+    assert_true(isinf(float_vector_index(vec, 0)));
+    
+    // Insert NaN
+    assert_true(insert_float_vector(vec, NAN, 1));
+    assert_true(isnan(float_vector_index(vec, 1)));
+    
+    // Insert zero
+    assert_true(insert_float_vector(vec, 0.0f, 1));
+    assert_float_equal(float_vector_index(vec, 1), 0.0f, 0.0001f);
+    
+    free_float_vector(vec);
+}
+
+/* Add to your test array */
+const struct CMUnitTest insert_tests[] = {
+    cmocka_unit_test(test_insert_vector_basic),
+    cmocka_unit_test(test_insert_vector_growth),
+    cmocka_unit_test(test_insert_array_basic),
+    cmocka_unit_test(test_insert_array_bounds),
+    cmocka_unit_test(test_insert_error_cases),
+    cmocka_unit_test(test_insert_special_values),
+};
+// ================================================================================ 
+// ================================================================================ 
 #endif
 // ================================================================================
 // ================================================================================

@@ -17,6 +17,7 @@
 #include <string.h>
 #include <float.h>
 #include <limits.h>
+#include <stdint.h>
 
 //static const float LOAD_FACTOR_THRESHOLD = 0.7;
 static const size_t VEC_THRESHOLD = 1 * 1024 * 1024;  // 1 MB
@@ -112,7 +113,7 @@ bool push_back_float_vector(float_v* vec, const float value) {
 // --------------------------------------------------------------------------------
 
 bool push_front_float_vector(float_v* vec, const float value) {
-    if (!vec || !vec->data) {
+    if (vec == NULL || vec->data == NULL) {
         errno = EINVAL;
         return false;
     }
@@ -123,14 +124,21 @@ bool push_front_float_vector(float_v* vec, const float value) {
             errno = EINVAL;
             return false;
         }
+        
         size_t new_alloc = vec->alloc == 0 ? 1 : vec->alloc;
         if (new_alloc < VEC_THRESHOLD) {
             new_alloc *= 2;
         } else {
             new_alloc += VEC_FIXED_AMOUNT;
         }
+        
+        // Check for size_t overflow
+        if (new_alloc > SIZE_MAX / sizeof(float)) {
+            errno = ERANGE;
+            return false;
+        }
        
-        float* new_data = realloc(vec->data, new_alloc * sizeof(new_data));
+        float* new_data = realloc(vec->data, new_alloc * sizeof(float));
         if (!new_data) {
             errno = ENOMEM;
             return false;
@@ -142,8 +150,16 @@ bool push_front_float_vector(float_v* vec, const float value) {
         vec->alloc = new_alloc;
     }
 
-    // Move existing elements right
-    memmove(vec->data + 1, vec->data, vec->len * sizeof(float));
+    // Check for length overflow
+    if (vec->len > SIZE_MAX - 1) {
+        errno = ERANGE;
+        return false;
+    }
+    
+    // Move existing elements right if there are any
+    if (vec->len > 0) {
+        memmove(vec->data + 1, vec->data, vec->len * sizeof(float));
+    }
     
     vec->data[0] = value;    
     vec->len++;
@@ -160,6 +176,10 @@ bool insert_float_vector(float_v* vec, float value, size_t index) {
         errno = ERANGE;
         return false;
     }
+    if (vec->len >= SIZE_MAX) {  // Check length overflow
+        errno = ERANGE;
+        return false;
+    }
    
     // Check if we need to resize
     if (vec->len >= vec->alloc) {
@@ -172,6 +192,12 @@ bool insert_float_vector(float_v* vec, float value, size_t index) {
             new_alloc *= 2;
         } else {
             new_alloc += VEC_FIXED_AMOUNT;
+        }
+        
+        // Check allocation size overflow
+        if (new_alloc > SIZE_MAX / sizeof(float)) {
+            errno = ERANGE;
+            return false;
         }
        
         float* new_data = realloc(vec->data, new_alloc * sizeof(float));
@@ -188,6 +214,11 @@ bool insert_float_vector(float_v* vec, float value, size_t index) {
     
     // Move existing elements right
     if (index < vec->len) {  // Only move if not appending
+        // Check for size_t overflow in move operation
+        if (vec->len - index > SIZE_MAX - 1) {
+            errno = ERANGE;
+            return false;
+        }
         memmove(vec->data + index + 1, vec->data + index, 
                 (vec->len - index) * sizeof(float));
     }

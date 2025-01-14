@@ -271,6 +271,115 @@ push_back_float_vector
       or by adding a fixed amount (when size >= VEC_THRESHOLD). This provides efficient
       amortized performance for both small and large vectors.
 
+push_front_float_vector
+~~~~~~~~~~~~~~~~~~~~~~~
+.. c:function:: bool push_front_float_vector(float_v* vec, const float value)
+
+   Adds a float value to the beginning of the vector, shifting all existing elements
+   to the right. Automatically resizes the vector if needed when using dynamic allocation.
+   This is the least efficient method for adding data to a float vector with
+   a time efficiency of O(n).
+
+   :param vec: Target float vector
+   :param value: Float value to add at front
+   :returns: true if successful, false on error
+   :raises: Sets errno to EINVAL for NULL inputs or if static array is full,
+           ENOMEM on allocation failure, ERANGE on size_t overflow
+
+   Example with dynamic vector:
+
+   .. code-block:: c
+
+      float_v* vec FLTVEC_GBC = init_float_vector(3);
+      
+      // Add some values from the back
+      push_back_float_vector(vec, 2.0f);
+      push_back_float_vector(vec, 3.0f);
+      
+      // Add value at the front
+      push_front_float_vector(vec, 1.0f);
+      
+      // Print all values
+      for (size_t i = 0; i < f_size(vec); i++) {
+          printf("%.1f ", float_vector_index(vec, i));
+      }
+      printf("\n");
+      
+      // Vector will grow automatically if needed
+      push_front_float_vector(vec, 0.0f);
+      
+      for (size_t i = 0; i < f_size(vec); i++) {
+          printf("%.1f ", float_vector_index(vec, i));
+      }
+      printf("\n");
+      
+   Output::
+
+      1.0 2.0 3.0
+      0.0 1.0 2.0 3.0
+
+   Example with static array:
+
+   .. code-block:: c
+
+      float_v arr = init_float_array(3);
+      
+      // Add values to static array
+      push_front_float_vector(&arr, 3.0f);
+      printf("After first:  ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+      
+      push_front_float_vector(&arr, 2.0f);
+      printf("After second: ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+      
+      push_front_float_vector(&arr, 1.0f);
+      printf("After third:  ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+      
+      // Array is now full - this will fail
+      if (!push_front_float_vector(&arr, 0.0f)) {
+          printf("Cannot add to full static array\n");
+      }
+
+   Output::
+
+      After first:  3.0
+      After second: 2.0 3.0
+      After third:  1.0 2.0 3.0
+      Cannot add to full static array
+
+   The following should be considered when using this function:
+
+   * For static arrays (created with init_float_array):
+     - Attempts to exceed capacity will fail with errno set to EINVAL
+     - No automatic resizing occurs
+   
+   * For dynamic vectors (created with init_float_vector):
+     - Vector will automatically resize when full
+     - Growth follows the doubling strategy for small vectors
+     - Growth adds fixed amount for vectors larger than VEC_THRESHOLD
+   
+   * Performance considerations:
+     - All existing elements must be moved right by one position
+     - More expensive than push_back_float_vector for large vectors
+     - Memory reallocation may occur for dynamic vectors
+
+   .. note::
+
+      When resizing is needed in dynamic vectors, the vector grows either by
+      doubling (when size < VEC_THRESHOLD) or by adding a fixed amount
+      (when size >= VEC_THRESHOLD). This provides efficient amortized
+      performance while preventing excessive memory usage in large vectors.
 
 Utility Functions
 =================
@@ -340,3 +449,4 @@ float_vector_alloc
    .. code-block:: bash 
 
       Allocation size: 5
+
