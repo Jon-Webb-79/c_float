@@ -18,21 +18,25 @@
 #include <float.h>
 #include <limits.h>
 
-static const float LOAD_FACTOR_THRESHOLD = 0.7;
+//static const float LOAD_FACTOR_THRESHOLD = 0.7;
 static const size_t VEC_THRESHOLD = 1 * 1024 * 1024;  // 1 MB
 static const size_t VEC_FIXED_AMOUNT = 1 * 1024 * 1024;  // 1 MB
-static const size_t hashSize = 3;  //  Size fo hash map initi functions
+//static const size_t hashSize = 3;  //  Size fo hash map initi functions
 // ================================================================================
 // ================================================================================ 
 
 float_v* init_float_vector(size_t buff) {
+    if (buff == 0) {
+        errno = EINVAL;
+        return NULL;
+    }
     float_v* struct_ptr = malloc(sizeof(float_v));
     if (struct_ptr == NULL) {
         errno = ENOMEM;
         return NULL;
     }
    
-    float* data_ptr = malloc(buff * sizeof(data_ptr));
+    float* data_ptr = malloc(buff * sizeof(float));
     if (data_ptr == NULL) {
         free(struct_ptr);
         errno = ENOMEM;

@@ -14,7 +14,8 @@
 # Create the test executable using unit_test.c and test_hello.c
 add_executable(unit_tests
 	unit_test.c
-	test_hello.c)
+	test_vector.c
+)
 
 # Link the test executable against the Hello library and cmocka
 target_link_libraries(unit_tests c_float cmocka)

@@ -25,6 +25,7 @@ extern "C" {
 #endif
 // ================================================================================
 // ================================================================================
+
 #ifndef ITER_DIR_H
 #define ITER_DIR_H
     /**
@@ -84,12 +85,13 @@ float_v* init_float_vector(size_t buffer);
 // --------------------------------------------------------------------------------
 
 /**
-* @macro init_float_array
-* @brief Initializes a new statically allocated float vector with specified initial capacity
-*
-* @param buffer Total capacity to allocate
-*/
-#define init_float_array(buffer) {.data = float[buffer]; .len = 0; .alloc = buffer; .alloc_type = STATIC}
+ * @macro FLOAT_ARRAY
+ * @brief Creates a stack-based float vector with static array
+ *
+ * @param size Size of the array
+ */
+#define init_float_array(size) \
+    ((float_v){.data = (float[size]){0}, .len = 0, .alloc = size, .alloc_type = STATIC})
 // --------------------------------------------------------------------------------
 
 /**
