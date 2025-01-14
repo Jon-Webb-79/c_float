@@ -1,19 +1,18 @@
-#!/usr/bin/zsh
+#!/usr/bin/sh
 # ================================================================================
 # ================================================================================
-# - File:    compile.zsh
-# - Purpose: This file contains a script that will compile C and C++ code
-#            using CMake
+# - File:    static.sh
+# - Purpose: This file creates a static library version of c_string
 #
 # Source Metadata
 # - Author:  Jonathan A. Webb
-# - Date:    February 26, 2022
+# - Date:    January 11, 2025
 # - Version: 1.0
-# - Copyright: Copyright 2022, Jon Webb Inc.
+# - Copyright: Copyright 2025, Jon Webb Inc.
 # ================================================================================
 # ================================================================================
-
-cmake --build ../../c_float/build/
+cmake -S ../../c_float/ -B ../../c_float/build/static/ -DBUILD_STATIC=ON
+cmake --build ../../c_float/build/static/
 # ================================================================================
 # ================================================================================
 # eof
