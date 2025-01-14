@@ -180,7 +180,97 @@ FLTVEC_GBC
       init_float_vector(). It is not needed for static arrays created with
       init_float_array() as they are automatically cleaned up when going out of scope.
 
-[Previous content remains the same until "Automatic Cleanup" section...]
+Data Addition 
+-------------
+The functions below can be used to add data to a dynamically allocated array 
+or a statically allocated vector.
+
+push_back_float_vector
+~~~~~~~~~~~~~~~~~~~~~~
+.. c:function:: bool push_back_float_vector(float_v* vec, const float value)
+
+   Adds a float value to the end of the vector. If needed, the vector automatically
+   resizes to accommodate the new value. For vectors smaller than VEC_THRESHOLD,
+   capacity doubles when full. For larger vectors, a fixed amount is added.
+   This is the most efficient method for adding data to a float vector with
+   a time efficiency of O(1). If the structure passed is for a statically allocated 
+   array, the function will return ``false``, if the user tries to enter data to 
+   an out of bounds index and will set ``errno`` to ``EINVAL``
+
+   :param vec: Target float vector
+   :param value: Float value to add to vector
+   :returns: true if successful, false on error
+   :raises: Sets errno to EINVAL for NULL inputs or ENOMEM on allocation failure
+
+   Vector Example:
+
+   .. code-block:: c
+
+      float_v* vec = init_float_vector(2);
+      
+      // Add some values
+      push_back_float_vector(vec, 3.14f);
+      push_back_float_vector(vec, 2.718f);
+      
+      // Vector will automatically resize
+      push_back_float_vector(vec, 1.414f);
+      
+      printf("Vector size: %zu\n", f_size(vec));
+      printf("[ ");
+      for (size_t i = 0; i < f_size(vec) - 1; i++) 
+          printf("%f, ", float_vector_index(vec, 1));
+      printf("%f ]\n", float_vector_index(vec, f_size(vec) - 1))
+      
+      free_float_vector(vec);
+
+   Output::
+
+      Vector size: 3
+      [ 3.140000, 2.718000, 1.414000 ]
+
+   Array Example:
+
+   .. code-block:: c
+
+      float_v* vec = init_float_array(2);
+      
+      // Add some values
+      push_back_float_vector(vec, 3.14f);
+      push_back_float_vector(vec, 2.718f);
+      
+      // Array will refuse third element because it is out of bounds 
+      
+      if (!push_back_float_vector(vec, 1.414f))
+          printf("push back failed\n");
+      
+      printf("Array size: %zu\n", f_size(vec));
+      printf("[ ");
+      for (size_t i = 0; i < f_size(vec) - 1; i++) 
+          printf("%f, ", float_vector_index(vec, 1));
+      printf("%f ]\n", float_vector_index(vec, f_size(vec) - 1))
+      
+      free_float_vector(vec);
+
+   Output::
+
+      push back failed
+      Array size: 2
+      [ 3.140000, 2.718000 ]
+
+   The following should be considered when using this function:
+
+   * The vector must be properly initialized using init_float_vector() or init_float_array()
+   * For static arrays (created with init_float_array), attempts to exceed capacity will fail
+   * If reallocation fails for dynamic vectors, the original vector remains unchanged
+   * Any float value can be stored, including zero, infinities, and NaN
+   * The operation requires enough contiguous memory for the entire resized array in dynamic case
+
+   .. note::
+
+      When resizing is needed, the vector grows either by doubling (when size < VEC_THRESHOLD)
+      or by adding a fixed amount (when size >= VEC_THRESHOLD). This provides efficient
+      amortized performance for both small and large vectors.
+
 
 Utility Functions
 =================
