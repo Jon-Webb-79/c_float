@@ -381,6 +381,118 @@ push_front_float_vector
       (when size >= VEC_THRESHOLD). This provides efficient amortized
       performance while preventing excessive memory usage in large vectors.
 
+insert_float_vector
+~~~~~~~~~~~~~~~~~~~
+.. c:function:: bool insert_float_vector(float_v* vec, float value, size_t index)
+
+   Inserts a float value at any valid position in the vector, shifting subsequent
+   elements to the right. Automatically resizes the vector if needed when using dynamic
+   allocation. The time complexity of this function varies from O(1) to O(n) depending
+   on the insertion position.
+
+   :param vec: Target float vector
+   :param value: Float value to insert
+   :param index: Position at which to insert (0 to vec->len)
+   :returns: true if successful, false on error
+   :raises: Sets errno to EINVAL for NULL inputs or if static array is full,
+           ERANGE for invalid index or on size_t overflow,
+           ENOMEM on allocation failure
+
+   Example with dynamic vector:
+
+   .. code-block:: c
+
+      float_v* vec FLTVEC_GBC = init_float_vector(4);
+      
+      // Create initial vector
+      push_back_float_vector(vec, 1.0f);
+      push_back_float_vector(vec, 3.0f);
+      
+      // Initial state
+      printf("Initial:     ");
+      for (size_t i = 0; i < f_size(vec); i++) {
+          printf("%.1f ", float_vector_index(vec, i));
+      }
+      printf("\n");
+      
+      // Insert 2.0 between them
+      insert_float_vector(vec, 2.0f, 1);
+      
+      printf("After insert: ");
+      for (size_t i = 0; i < f_size(vec); i++) {
+          printf("%.1f ", float_vector_index(vec, i));
+      }
+      printf("\n");
+      
+   Output::
+
+      Initial:     1.0 3.0
+      After insert: 1.0 2.0 3.0
+
+   Example with static array:
+
+   .. code-block:: c
+
+      float_v arr = init_float_array(3);
+      
+      // Insert values at different positions
+      insert_float_vector(&arr, 3.0f, 0);  // First insertion
+      printf("First insert:  ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+      
+      insert_float_vector(&arr, 1.0f, 0);  // At beginning
+      printf("Second insert: ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+      
+      insert_float_vector(&arr, 2.0f, 1);  // In middle
+      printf("Third insert:  ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+      
+      // Array is now full - this will fail
+      if (!insert_float_vector(&arr, 4.0f, 1)) {
+          printf("Cannot insert into full static array\n");
+      }
+
+   Output::
+
+      First insert:  3.0
+      Second insert: 1.0 3.0
+      Third insert:  1.0 2.0 3.0
+      Cannot insert into full static array
+
+   The following should be considered when using this function:
+
+   * For static arrays (created with init_float_array):
+     - Attempts to exceed capacity will fail with errno set to EINVAL
+     - No automatic resizing occurs
+     - Must be careful not to exceed fixed size
+   
+   * For dynamic vectors (created with init_float_vector):
+     - Vector will automatically resize when full
+     - Growth follows the doubling strategy for small vectors
+     - Growth adds fixed amount for vectors larger than VEC_THRESHOLD
+   
+   * Performance considerations:
+     - Inserting at the beginning requires moving all elements (most expensive)
+     - Inserting at the end is equivalent to push_back (least expensive)
+     - Cost increases with number of elements that must be shifted
+     - Memory reallocation may occur for dynamic vectors
+
+   .. note::
+
+      The valid range for index is [0, length]. An index equal to the length
+      performs an append operation. Any index greater than the length will
+      result in ERANGE error.
+
 Utility Functions
 =================
 The following functions and macros can be used to retrieve basic information from
