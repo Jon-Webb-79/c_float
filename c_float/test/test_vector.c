@@ -577,16 +577,382 @@ void test_insert_special_values(void **state) {
     
     free_float_vector(vec);
 }
+// ================================================================================ 
+// ================================================================================
 
-/* Add to your test array */
-const struct CMUnitTest insert_tests[] = {
-    cmocka_unit_test(test_insert_vector_basic),
-    cmocka_unit_test(test_insert_vector_growth),
-    cmocka_unit_test(test_insert_array_basic),
-    cmocka_unit_test(test_insert_array_bounds),
-    cmocka_unit_test(test_insert_error_cases),
-    cmocka_unit_test(test_insert_special_values),
-};
+void test_pop_back_basic(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(3);
+    assert_non_null(vec);
+    
+    // Add some test values
+    push_back_float_vector(vec, 1.0f);
+    push_back_float_vector(vec, 2.0f);
+    push_back_float_vector(vec, 3.0f);
+    
+    // Test popping values
+    errno = 0;
+    assert_float_equal(pop_back_float_vector(vec), 3.0f, 0.0001f);
+    assert_int_equal(f_size(vec), 2);
+    assert_int_equal(errno, 0);
+    
+    errno = 0;
+    assert_float_equal(pop_back_float_vector(vec), 2.0f, 0.0001f);
+    assert_int_equal(f_size(vec), 1);
+    assert_int_equal(errno, 0);
+    
+    errno = 0;
+    assert_float_equal(pop_back_float_vector(vec), 1.0f, 0.0001f);
+    assert_int_equal(f_size(vec), 0);
+    assert_int_equal(errno, 0);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_pop_back_empty(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(1);
+    assert_non_null(vec);
+    
+    // Try to pop from empty vector
+    errno = 0;
+    float result = pop_back_float_vector(vec);
+    assert_float_equal(result, FLT_MAX, 0.0001f);
+    assert_int_equal(errno, ENODATA);
+    
+    free_float_vector(vec);
+}
+// --------------------------------------------------------------------------------
+
+void test_pop_back_errors(void **state) {
+    (void) state;
+    
+    // Test NULL vector
+    errno = 0;
+    float result = pop_back_float_vector(NULL);
+    assert_float_equal(result, FLT_MAX, 0.0001f);
+    assert_int_equal(errno, EINVAL);
+    
+    // Test invalid data pointer
+    float_v vec = {0};
+    vec.data = NULL;
+    errno = 0;
+    result = pop_back_float_vector(&vec);
+    assert_float_equal(result, FLT_MAX, 0.0001f);
+    assert_int_equal(errno, EINVAL);
+}
+// --------------------------------------------------------------------------------
+
+void test_pop_back_special_values(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(3);
+    assert_non_null(vec);
+    
+    // Test popping FLT_MAX as valid data
+    push_back_float_vector(vec, FLT_MAX);
+    errno = 0;
+    float result = pop_back_float_vector(vec);
+    assert_float_equal(result, FLT_MAX, 0.0001f);
+    assert_int_equal(errno, 0);  // Should be 0 since this is valid data
+    
+    // Test popping infinity
+    push_back_float_vector(vec, INFINITY);
+    errno = 0;
+    result = pop_back_float_vector(vec);
+    assert_true(isinf(result));
+    assert_int_equal(errno, 0);
+    
+    // Test popping NaN
+    push_back_float_vector(vec, NAN);
+    errno = 0;
+    result = pop_back_float_vector(vec);
+    assert_true(isnan(result));
+    assert_int_equal(errno, 0);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_pop_back_static(void **state) {
+    (void) state;
+    
+    float_v arr = init_float_array(2);
+    
+    // Add and pop values from static array
+    push_back_float_vector(&arr, 1.0f);
+    push_back_float_vector(&arr, 2.0f);
+    
+    errno = 0;
+    assert_float_equal(pop_back_float_vector(&arr), 2.0f, 0.0001f);
+    assert_int_equal(f_size(&arr), 1);
+    assert_int_equal(errno, 0);
+    
+    errno = 0;
+    assert_float_equal(pop_back_float_vector(&arr), 1.0f, 0.0001f);
+    assert_int_equal(f_size(&arr), 0);
+    assert_int_equal(errno, 0);
+    
+    // Try to pop from empty array
+    errno = 0;
+    float result = pop_back_float_vector(&arr);
+    assert_float_equal(result, FLT_MAX, 0.0001f);
+    assert_int_equal(errno, ENODATA);
+}
+// ================================================================================ 
+// ================================================================================ 
+
+void test_pop_front_basic(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(3);
+    assert_non_null(vec);
+    
+    // Add some test values
+    push_back_float_vector(vec, 1.0f);
+    push_back_float_vector(vec, 2.0f);
+    push_back_float_vector(vec, 3.0f);
+    
+    // Test popping values and check remaining elements
+    errno = 0;
+    assert_float_equal(pop_front_float_vector(vec), 1.0f, 0.0001f);
+    assert_int_equal(f_size(vec), 2);
+    assert_float_equal(float_vector_index(vec, 0), 2.0f, 0.0001f);
+    assert_float_equal(float_vector_index(vec, 1), 3.0f, 0.0001f);
+    assert_int_equal(errno, 0);
+    
+    errno = 0;
+    assert_float_equal(pop_front_float_vector(vec), 2.0f, 0.0001f);
+    assert_int_equal(f_size(vec), 1);
+    assert_float_equal(float_vector_index(vec, 0), 3.0f, 0.0001f);
+    assert_int_equal(errno, 0);
+    
+    errno = 0;
+    assert_float_equal(pop_front_float_vector(vec), 3.0f, 0.0001f);
+    assert_int_equal(f_size(vec), 0);
+    assert_int_equal(errno, 0);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_pop_front_empty(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(1);
+    assert_non_null(vec);
+    
+    // Try to pop from empty vector
+    errno = 0;
+    float result = pop_front_float_vector(vec);
+    assert_float_equal(result, FLT_MAX, 0.0001f);
+    assert_int_equal(errno, ENODATA);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_pop_front_errors(void **state) {
+    (void) state;
+    
+    // Test NULL vector
+    errno = 0;
+    float result = pop_front_float_vector(NULL);
+    assert_float_equal(result, FLT_MAX, 0.0001f);
+    assert_int_equal(errno, EINVAL);
+    
+    // Test invalid data pointer
+    float_v vec = {0};
+    vec.data = NULL;
+    errno = 0;
+    result = pop_front_float_vector(&vec);
+    assert_float_equal(result, FLT_MAX, 0.0001f);
+    assert_int_equal(errno, EINVAL);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_pop_front_special_values(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(3);
+    assert_non_null(vec);
+    
+    // Test popping FLT_MAX as valid data
+    push_back_float_vector(vec, FLT_MAX);
+    push_back_float_vector(vec, 1.0f);
+    errno = 0;
+    float result = pop_front_float_vector(vec);
+    assert_float_equal(result, FLT_MAX, 0.0001f);
+    assert_int_equal(errno, 0);  // Should be 0 since this is valid data
+    assert_float_equal(float_vector_index(vec, 0), 1.0f, 0.0001f);
+    
+    // Test popping infinity
+    push_front_float_vector(vec, INFINITY);
+    errno = 0;
+    result = pop_front_float_vector(vec);
+    assert_true(isinf(result));
+    assert_int_equal(errno, 0);
+    
+    // Test popping NaN
+    push_front_float_vector(vec, NAN);
+    errno = 0;
+    result = pop_front_float_vector(vec);
+    assert_true(isnan(result));
+    assert_int_equal(errno, 0);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_pop_front_static(void **state) {
+    (void) state;
+    
+    float_v arr = init_float_array(2);
+    
+    // Add and pop values from static array
+    push_back_float_vector(&arr, 1.0f);
+    push_back_float_vector(&arr, 2.0f);
+    
+    errno = 0;
+    assert_float_equal(pop_front_float_vector(&arr), 1.0f, 0.0001f);
+    assert_int_equal(f_size(&arr), 1);
+    assert_float_equal(float_vector_index(&arr, 0), 2.0f, 0.0001f);
+    assert_int_equal(errno, 0);
+    
+    errno = 0;
+    assert_float_equal(pop_front_float_vector(&arr), 2.0f, 0.0001f);
+    assert_int_equal(f_size(&arr), 0);
+    assert_int_equal(errno, 0);
+    
+    // Try to pop from empty array
+    errno = 0;
+    float result = pop_front_float_vector(&arr);
+    assert_float_equal(result, FLT_MAX, 0.0001f);
+    assert_int_equal(errno, ENODATA);
+}
+// ================================================================================ 
+// ================================================================================ 
+
+void test_pop_any_basic(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(4);
+    assert_non_null(vec);
+    
+    // Add test values
+    push_back_float_vector(vec, 1.0f);
+    push_back_float_vector(vec, 2.0f);
+    push_back_float_vector(vec, 3.0f);
+    push_back_float_vector(vec, 4.0f);
+    
+    // Test popping from middle
+    errno = 0;
+    assert_float_equal(pop_any_float_vector(vec, 1), 2.0f, 0.0001f);
+    assert_int_equal(f_size(vec), 3);
+    assert_float_equal(float_vector_index(vec, 0), 1.0f, 0.0001f);
+    assert_float_equal(float_vector_index(vec, 1), 3.0f, 0.0001f);
+    assert_float_equal(float_vector_index(vec, 2), 4.0f, 0.0001f);
+    assert_int_equal(errno, 0);
+    
+    // Test popping first element
+    assert_float_equal(pop_any_float_vector(vec, 0), 1.0f, 0.0001f);
+    assert_int_equal(f_size(vec), 2);
+    assert_float_equal(float_vector_index(vec, 0), 3.0f, 0.0001f);
+    assert_float_equal(float_vector_index(vec, 1), 4.0f, 0.0001f);
+    
+    // Test popping last element
+    assert_float_equal(pop_any_float_vector(vec, 1), 4.0f, 0.0001f);
+    assert_int_equal(f_size(vec), 1);
+    assert_float_equal(float_vector_index(vec, 0), 3.0f, 0.0001f);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_pop_any_errors(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(2);
+    assert_non_null(vec);
+    push_back_float_vector(vec, 1.0f);
+    
+    // Test NULL vector
+    errno = 0;
+    float result = pop_any_float_vector(NULL, 0);
+    assert_float_equal(result, FLT_MAX, 0.0001f);
+    assert_int_equal(errno, EINVAL);
+    
+    // Test invalid index
+    errno = 0;
+    result = pop_any_float_vector(vec, 1);  // Index equals length
+    assert_float_equal(result, FLT_MAX, 0.0001f);
+    assert_int_equal(errno, ERANGE);
+    
+    errno = 0;
+    result = pop_any_float_vector(vec, 2);  // Index beyond length
+    assert_float_equal(result, FLT_MAX, 0.0001f);
+    assert_int_equal(errno, ERANGE);
+    
+    // Test empty vector
+    pop_any_float_vector(vec, 0);  // Remove the only element
+    errno = 0;
+    result = pop_any_float_vector(vec, 0);
+    assert_float_equal(result, FLT_MAX, 0.0001f);
+    assert_int_equal(errno, ENODATA);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_pop_any_static(void **state) {
+    (void) state;
+    
+    float_v arr = init_float_array(3);
+    
+    // Fill array
+    push_back_float_vector(&arr, 1.0f);
+    push_back_float_vector(&arr, 2.0f);
+    push_back_float_vector(&arr, 3.0f);
+    
+    // Pop from middle
+    errno = 0;
+    float result = pop_any_float_vector(&arr, 1);
+    assert_float_equal(result, 2.0f, 0.0001f);
+    assert_int_equal(f_size(&arr), 2);
+    assert_float_equal(float_vector_index(&arr, 0), 1.0f, 0.0001f);
+    assert_float_equal(float_vector_index(&arr, 1), 3.0f, 0.0001f);
+    assert_int_equal(errno, 0);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_pop_any_special_values(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(3);
+    assert_non_null(vec);
+    
+    // Test with FLT_MAX as valid data
+    push_back_float_vector(vec, 1.0f);
+    push_back_float_vector(vec, FLT_MAX);
+    push_back_float_vector(vec, 3.0f);
+     
+    errno = 0;
+    float result = pop_any_float_vector(vec, 1);
+    assert_float_equal(result, FLT_MAX, 0.0001f);
+    assert_int_equal(errno, 0);  // Should be 0 since this is valid data
+     
+    // Test with NaN
+    push_back_float_vector(vec, NAN);
+    errno = 0;
+    result = pop_any_float_vector(vec, 2);
+    assert_true(isnan(result));
+    assert_int_equal(errno, 0);
+    
+    free_float_vector(vec);
+}
 // ================================================================================ 
 // ================================================================================ 
 #endif

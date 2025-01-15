@@ -193,7 +193,7 @@ push_back_float_vector
    resizes to accommodate the new value. For vectors smaller than VEC_THRESHOLD,
    capacity doubles when full. For larger vectors, a fixed amount is added.
    This is the most efficient method for adding data to a float vector with
-   a time efficiency of O(1). If the structure passed is for a statically allocated 
+   a time efficiency of :math:`O(1)`. If the structure passed is for a statically allocated 
    array, the function will return ``false``, if the user tries to enter data to 
    an out of bounds index and will set ``errno`` to ``EINVAL``
 
@@ -278,7 +278,7 @@ push_front_float_vector
    Adds a float value to the beginning of the vector, shifting all existing elements
    to the right. Automatically resizes the vector if needed when using dynamic allocation.
    This is the least efficient method for adding data to a float vector with
-   a time efficiency of O(n).
+   a time efficiency of :math:`O(n)`.
 
    :param vec: Target float vector
    :param value: Float value to add at front
@@ -387,8 +387,8 @@ insert_float_vector
 
    Inserts a float value at any valid position in the vector, shifting subsequent
    elements to the right. Automatically resizes the vector if needed when using dynamic
-   allocation. The time complexity of this function varies from O(1) to O(n) depending
-   on the insertion position.
+   allocation. The time complexity of this function varies from :math:`O(1)` 
+   to :math:`O(n)` depending on the insertion position.
 
    :param vec: Target float vector
    :param value: Float value to insert
@@ -492,6 +492,352 @@ insert_float_vector
       The valid range for index is [0, length]. An index equal to the length
       performs an append operation. Any index greater than the length will
       result in ERANGE error.
+
+Data Removal
+------------
+The following functions can be used to remove ``float`` data from a dynamically 
+allocated vector or statically allocated array.
+
+pop_back_float_vector
+~~~~~~~~~~~~~~~~~~~~~
+.. c:function:: float pop_back_float_vector(float_v* vec)
+
+   Removes and returns the last element from the vector or array. This is the most
+   efficient removal operation as it requires no element shifting. The time 
+   complexity of this function is :math:`O(1)`.
+
+   :param vec: Target float vector
+   :returns: The removed float value, or FLT_MAX on error
+   :raises: Sets errno to EINVAL for NULL input, ENODATA if vector is empty
+
+   Example with dynamic vector:
+
+   .. code-block:: c
+
+      float_v* vec FLTVEC_GBC = init_float_vector(3);
+      
+      // Add some values
+      push_back_float_vector(vec, 1.0f);
+      push_back_float_vector(vec, 2.0f);
+      push_back_float_vector(vec, 3.0f);
+      
+      printf("Initial values: ");
+      for (size_t i = 0; i < f_size(vec); i++) {
+          printf("%.1f ", float_vector_index(vec, i));
+      }
+      printf("\n");
+      
+      float popped = pop_back_float_vector(vec);
+      if (errno == 0) {
+          printf("Popped value: %.1f\n", popped);
+          printf("Remaining size: %zu\n", f_size(vec));
+      }
+
+   Output::
+
+      Initial values: 1.0 2.0 3.0
+      Popped value: 3.0
+      Remaining size: 2
+
+   Example with static array:
+
+   .. code-block:: c
+
+      float_v arr = init_float_array(2);
+      
+      // Add values to static array
+      push_back_float_vector(&arr, 1.0f);
+      push_back_float_vector(&arr, 2.0f);
+      
+      printf("Initial values: ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+      
+      // Pop values
+      float first_pop = pop_back_float_vector(&arr);
+      printf("First pop: %.1f\n", first_pop);
+      
+      float second_pop = pop_back_float_vector(&arr);
+      printf("Second pop: %.1f\n", second_pop);
+      
+      // Try to pop from empty array
+      float result = pop_back_float_vector(&arr);
+      if (errno == ENODATA) {
+          printf("Cannot pop from empty array\n");
+      }
+
+   Output::
+
+      Initial values: 1.0 2.0
+      First pop: 2.0
+      Second pop: 1.0
+      Cannot pop from empty array
+
+   Error Handling:
+
+   * If vec is NULL or has invalid data pointer:
+     - Returns FLT_MAX
+     - Sets errno to EINVAL
+   
+   * If vector or array is empty:
+     - Returns FLT_MAX
+     - Sets errno to ENODATA
+
+   .. note::
+
+      When FLT_MAX is returned, always check errno to distinguish between an error
+      condition and a valid FLT_MAX value that was stored in the vector. If errno
+      is 0, the returned FLT_MAX was a valid stored value.
+
+   Example with error checking:
+
+   .. code-block:: c
+
+      float_v* vec = init_float_vector(2);
+      push_back_float_vector(vec, FLT_MAX);  // Store actual FLT_MAX
+      
+      errno = 0;
+      float value = pop_back_float_vector(vec);
+      if (errno == 0) {
+          // This was a valid FLT_MAX stored in the vector
+          printf("Valid FLT_MAX popped\n");
+      } else if (errno == ENODATA) {
+          printf("Vector is empty\n");
+      } else if (errno == EINVAL) {
+          printf("Invalid vector\n");
+      }
+      
+      free_float_vector(vec);
+
+   Output::
+
+      Valid FLT_MAX popped
+
+pop_front_float_vector
+~~~~~~~~~~~~~~~~~~~~~~
+.. c:function:: float pop_front_float_vector(float_v* vec)
+
+   Removes and returns the first element from the vector or array, shifting all
+   remaining elements left by one position. This operation requires moving all
+   remaining elements and is therefore less efficient than pop_back_float_vector.
+   This function has a time complexity of :math:`O(n)`.
+
+   :param vec: Target float vector
+   :returns: The removed float value, or FLT_MAX on error
+   :raises: Sets errno to EINVAL for NULL input, ENODATA if vector is empty
+
+   Example with dynamic vector:
+
+   .. code-block:: c
+
+      float_v* vec FLTVEC_GBC = init_float_vector(3);
+      
+      // Add some values
+      push_back_float_vector(vec, 1.0f);
+      push_back_float_vector(vec, 2.0f);
+      push_back_float_vector(vec, 3.0f);
+      
+      printf("Initial values: ");
+      for (size_t i = 0; i < f_size(vec); i++) {
+          printf("%.1f ", float_vector_index(vec, i));
+      }
+      printf("\n");
+      
+      float popped = pop_front_float_vector(vec);
+      if (errno == 0) {
+          printf("Popped value: %.1f\n", popped);
+          printf("Remaining values: ");
+          for (size_t i = 0; i < f_size(vec); i++) {
+              printf("%.1f ", float_vector_index(vec, i));
+          }
+          printf("\n");
+      }
+      
+   Output::
+
+      Initial values: 1.0 2.0 3.0
+      Popped value: 1.0
+      Remaining values: 2.0 3.0
+
+   Example with static array:
+
+   .. code-block:: c
+
+      float_v arr = init_float_array(2);
+      
+      // Add values to static array
+      push_back_float_vector(&arr, 1.0f);
+      push_back_float_vector(&arr, 2.0f);
+      
+      printf("Initial values: ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+      
+      // Pop first value
+      float first_pop = pop_front_float_vector(&arr);
+      printf("First pop: %.1f\n", first_pop);
+      printf("After first pop: ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+      
+      // Pop remaining value
+      float second_pop = pop_front_float_vector(&arr);
+      printf("Second pop: %.1f\n", second_pop);
+      
+      // Try to pop from empty array
+      float result = pop_front_float_vector(&arr);
+      if (errno == ENODATA) {
+          printf("Cannot pop from empty array\n");
+      }
+
+   Output::
+
+      Initial values: 1.0 2.0
+      First pop: 1.0
+      After first pop: 2.0
+      Second pop: 2.0
+      Cannot pop from empty array
+
+   Error Handling:
+
+   * If vec is NULL or has invalid data pointer:
+     - Returns FLT_MAX
+     - Sets errno to EINVAL
+   
+   * If vector or array is empty:
+     - Returns FLT_MAX
+     - Sets errno to ENODATA
+
+   .. note::
+
+      When FLT_MAX is returned, always check errno to distinguish between an error
+      condition and a valid FLT_MAX value that was stored in the vector. If errno
+      is 0, the returned FLT_MAX was a valid stored value.
+
+pop_any_float_vector
+~~~~~~~~~~~~~~~~~~~~
+.. c:function:: float pop_any_float_vector(float_v* vec, size_t index)
+
+   Removes and returns the element at the specified index in the vector or array,
+   shifting any subsequent elements to the left. Performance varies based on the
+   removal position - removing from the end is fast, while removing from the start
+   or middle requires shifting elements.  This function has a time complexity that 
+   range from :math:`O(n)` to :math:`O(1)` depending on the index from which 
+   data is popped.
+
+   :param vec: Target float vector
+   :param index: Position of element to remove (0 to len-1)
+   :returns: The removed float value, or FLT_MAX on error
+   :raises: Sets errno to EINVAL for NULL input, ENODATA if vector is empty,
+           ERANGE for invalid index or on size_t overflow
+
+   Example with dynamic vector:
+
+   .. code-block:: c
+
+      float_v* vec FLTVEC_GBC = init_float_vector(4);
+      
+      // Add values
+      push_back_float_vector(vec, 1.0f);
+      push_back_float_vector(vec, 2.0f);
+      push_back_float_vector(vec, 3.0f);
+      push_back_float_vector(vec, 4.0f);
+      
+      printf("Initial values: ");
+      for (size_t i = 0; i < f_size(vec); i++) {
+          printf("%.1f ", float_vector_index(vec, i));
+      }
+      printf("\n");
+      
+      // Pop middle value (index 1)
+      float popped = pop_any_float_vector(vec, 1);
+      if (errno == 0) {
+          printf("Popped value: %.1f\n", popped);
+          printf("Remaining values: ");
+          for (size_t i = 0; i < f_size(vec); i++) {
+              printf("%.1f ", float_vector_index(vec, i));
+          }
+          printf("\n");
+      }
+
+   Output::
+
+      Initial values: 1.0 2.0 3.0 4.0
+      Popped value: 2.0
+      Remaining values: 1.0 3.0 4.0
+
+   Example with static array:
+
+   .. code-block:: c
+
+      float_v arr = init_float_array(3);
+      
+      // Add values
+      push_back_float_vector(&arr, 1.0f);
+      push_back_float_vector(&arr, 2.0f);
+      push_back_float_vector(&arr, 3.0f);
+      
+      printf("Initial values: ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+      
+      // Pop first value (index 0)
+      float first = pop_any_float_vector(&arr, 0);
+      printf("After pop first: ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+      
+      // Pop last value (index 1)
+      float last = pop_any_float_vector(&arr, 1);
+      printf("After pop last: ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+
+   Output::
+
+      Initial values: 1.0 2.0 3.0
+      After pop first: 2.0 3.0
+      After pop last: 2.0
+
+   Error Handling:
+
+   * If vec is NULL or has invalid data pointer:
+     - Returns FLT_MAX
+     - Sets errno to EINVAL
+   
+   * If vector or array is empty:
+     - Returns FLT_MAX
+     - Sets errno to ENODATA
+   
+   * If index is out of bounds:
+     - Returns FLT_MAX
+     - Sets errno to ERANGE
+
+   .. note::
+
+      When FLT_MAX is returned, always check errno to distinguish between an error
+      condition and a valid FLT_MAX value that was stored in the vector. If errno
+      is 0, the returned FLT_MAX was a valid stored value.
+
+   Performance Considerations:
+
+   * Removing from the last position (index == len-1) is O(1)
+   * Removing from the beginning requires shifting all elements left: O(n)
+   * Removing from position i requires shifting n-i elements: O(n-i)
+   * For frequent removals from the front, consider using pop_front_float_vector()
+   * For frequent removals from the back, consider using pop_back_float_vector()
 
 Utility Functions
 =================

@@ -237,7 +237,7 @@ float pop_back_float_vector(float_v* vec) {
     }
     
     if (vec->len == 0) {
-        errno = EINVAL;
+        errno = ENODATA;
         return FLT_MAX;
     }
     
@@ -250,20 +250,25 @@ float pop_back_float_vector(float_v* vec) {
 }
 // --------------------------------------------------------------------------------
 
-float pop_front_str_vector(float_v* vec) {
+float pop_front_float_vector(float_v* vec) {  // Fixed function name
     if (!vec || !vec->data) {
         errno = EINVAL;
         return FLT_MAX;
     }
    
     if (vec->len == 0) {
-        errno = EINVAL;
+        errno = ENODATA;
+        return FLT_MAX;
+    }
+   
+    // Check for overflow in memmove size calculation
+    if (vec->len > SIZE_MAX / sizeof(float)) {
+        errno = ERANGE;
         return FLT_MAX;
     }
    
     // Create copy of first element
     float temp = vec->data[0];
-
     // Shift remaining elements left
     memmove(vec->data, vec->data + 1, (vec->len - 1) * sizeof(float));
    
@@ -282,23 +287,31 @@ float pop_any_float_vector(float_v* vec, size_t index) {
     }
    
     if (vec->len == 0) {
-        errno = EINVAL;
+        errno = ENODATA;
         return FLT_MAX;
     }
-
+    
     if (index >= vec->len) {
         errno = ERANGE;
         return FLT_MAX;
     }
-
+    
     // Create copy of element to pop
     float temp = vec->data[index];
     
-    // Shift remaining elements left
-    memmove(&vec->data[index], &vec->data[index + 1], 
-            (vec->len - index - 1) * sizeof(float));
+    // If not the last element, shift remaining elements left
+    if (index < vec->len - 1) {
+        // Check for overflow in memmove size calculation
+        if ((vec->len - index - 1) > SIZE_MAX / sizeof(float)) {
+            errno = ERANGE;
+            return FLT_MAX;
+        }
+        
+        memmove(&vec->data[index], &vec->data[index + 1], 
+                (vec->len - index - 1) * sizeof(float));
+    }
    
-    // Clear the last element (which was moved)
+    // Clear the last element
     memset(&vec->data[vec->len - 1], 0, sizeof(float));
     
     vec->len--;
