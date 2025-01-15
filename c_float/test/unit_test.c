@@ -70,7 +70,13 @@ int main(int argc, const char * argv[]) {
         cmocka_unit_test(test_reverse_basic),
         cmocka_unit_test(test_reverse_errors),
         cmocka_unit_test(test_reverse_static),
-        cmocka_unit_test(test_reverse_special_values)
+        cmocka_unit_test(test_reverse_special_values),
+        cmocka_unit_test(test_sort_basic),
+        cmocka_unit_test(test_sort_edge_cases),
+        cmocka_unit_test(test_sort_duplicates),
+        cmocka_unit_test(test_sort_special_values),
+        cmocka_unit_test(test_sort_static_array),
+        cmocka_unit_test(test_sort_errors)
 	};
 	return cmocka_run_group_tests(test_one, NULL, NULL);
 }

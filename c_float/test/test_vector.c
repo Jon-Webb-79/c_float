@@ -1053,6 +1053,147 @@ void test_reverse_special_values(void **state) {
     
     free_float_vector(vec);
 }
+// ================================================================================
+// ================================================================================ 
+
+void test_sort_basic(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(5);
+    assert_non_null(vec);
+    
+    // Test ascending sort
+    push_back_float_vector(vec, 5.0f);
+    push_back_float_vector(vec, 3.0f);
+    push_back_float_vector(vec, 4.0f);
+    push_back_float_vector(vec, 1.0f);
+    push_back_float_vector(vec, 2.0f);
+    
+    sort_float_vector(vec, FORWARD);
+    
+    // Verify ascending order
+    for (size_t i = 0; i < f_size(vec) - 1; i++) {
+        assert_true(float_vector_index(vec, i) <= float_vector_index(vec, i + 1));
+    }
+    
+    // Test descending sort
+    sort_float_vector(vec, REVERSE);
+    
+    // Verify descending order
+    for (size_t i = 0; i < f_size(vec) - 1; i++) {
+        assert_true(float_vector_index(vec, i) >= float_vector_index(vec, i + 1));
+    }
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_sort_edge_cases(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(10);
+    assert_non_null(vec);
+    
+    // Test empty vector
+    sort_float_vector(vec, FORWARD);
+    assert_int_equal(f_size(vec), 0);
+    
+    // Test single element
+    push_back_float_vector(vec, 1.0f);
+    sort_float_vector(vec, FORWARD);
+    assert_int_equal(f_size(vec), 1);
+    assert_float_equal(float_vector_index(vec, 0), 1.0f, 0.0001f);
+    
+    // Test two elements
+    push_back_float_vector(vec, 0.0f);
+    sort_float_vector(vec, FORWARD);
+    assert_float_equal(float_vector_index(vec, 0), 0.0f, 0.0001f);
+    assert_float_equal(float_vector_index(vec, 1), 1.0f, 0.0001f);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_sort_duplicates(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(5);
+    assert_non_null(vec);
+    
+    // Add duplicate values
+    push_back_float_vector(vec, 3.0f);
+    push_back_float_vector(vec, 1.0f);
+    push_back_float_vector(vec, 3.0f);
+    push_back_float_vector(vec, 1.0f);
+    push_back_float_vector(vec, 2.0f);
+    
+    sort_float_vector(vec, FORWARD);
+    
+    // Verify order with duplicates
+    for (size_t i = 0; i < f_size(vec) - 1; i++) {
+        assert_true(float_vector_index(vec, i) <= float_vector_index(vec, i + 1));
+    }
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_sort_special_values(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(5);
+    assert_non_null(vec);
+    
+    // Add special values
+    push_back_float_vector(vec, INFINITY);
+    push_back_float_vector(vec, -INFINITY);
+    push_back_float_vector(vec, NAN);
+    push_back_float_vector(vec, 0.0f);
+    
+    sort_float_vector(vec, FORWARD);
+    
+    // Verify NaN handling and infinity ordering
+    size_t last_valid_index = f_size(vec) - 1;
+    while (last_valid_index > 0 && isnan(float_vector_index(vec, last_valid_index))) {
+        last_valid_index--;
+    }
+     
+    // Check that -INFINITY is first and INFINITY is last (excluding NaN)
+    assert_true(isinf(float_vector_index(vec, 0)) && float_vector_index(vec, 0) < 0);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_sort_static_array(void **state) {
+    (void) state;
+    
+    float_v arr = init_float_array(5);
+    
+    // Add unsorted values
+    push_back_float_vector(&arr, 5.0f);
+    push_back_float_vector(&arr, 3.0f);
+    push_back_float_vector(&arr, 4.0f);
+    push_back_float_vector(&arr, 1.0f);
+    push_back_float_vector(&arr, 2.0f);
+    
+    sort_float_vector(&arr, FORWARD);
+    
+    // Verify ascending order
+    for (size_t i = 0; i < f_size(&arr) - 1; i++) {
+        assert_true(float_vector_index(&arr, i) <= float_vector_index(&arr, i + 1));
+    }
+}
+// -------------------------------------------------------------------------------- 
+
+void test_sort_errors(void **state) {
+    (void) state;
+    
+    // Test NULL vector
+    errno = 0;
+    sort_float_vector(NULL, FORWARD);
+    assert_int_equal(errno, EINVAL);
+}
 // ================================================================================ 
 // ================================================================================ 
 #endif

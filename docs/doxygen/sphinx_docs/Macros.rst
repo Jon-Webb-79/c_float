@@ -1,6 +1,6 @@
-******
-Macros
-******
+****************************
+Macros and Utility Functions
+****************************
 
 Generic Macro Overview
 ======================
@@ -92,3 +92,39 @@ Result
 
    Array Length: 3
    Array Allocated Size: 5
+
+Utility Functions 
+=================
+The functions listed below can be used to augment ``float`` object handling.
+
+swap_float
+----------
+.. c:function:: void swap_float(float* a, float* b)
+
+   Swaps the values of two float variables. Uses a temporary variable to ensure
+   safe exchange of values.
+
+   :param a: Pointer to first float value
+   :param b: Pointer to second float value
+   :raises: Sets errno to EINVAL for NULL input pointers
+
+   Example:
+
+   .. code-block:: c
+
+      float x = 1.0f;
+      float y = 2.0f;
+      
+      printf("Before swap: x = %.1f, y = %.1f\n", x, y);
+      swap_float(&x, &y);
+      printf("After swap:  x = %.1f, y = %.1f\n", x, y);
+
+   Output::
+
+      Before swap: x = 1.0, y = 2.0
+      After swap:  x = 2.0, y = 1.0
+
+   .. note::
+
+      This utility function serves as a helper for other float manipulation functions
+      but can also be used independently for general float value swapping operations.

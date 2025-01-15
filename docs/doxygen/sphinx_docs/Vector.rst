@@ -1006,3 +1006,121 @@ reverse_float_vector
       The function performs the reversal in place by swapping pairs of elements
       from the ends toward the middle. This approach minimizes memory usage and
       maintains efficiency for both small and large vectors.
+
+sort_float_vector
+~~~~~~~~~~~~~~~~~
+.. c:function:: void sort_float_vector(float_v* vec, iter_dir direction)
+
+   Sorts a float vector or array in either ascending (FORWARD) or descending (REVERSE) order
+   using an optimized QuickSort algorithm with median-of-three pivot selection and
+   insertion sort for small subarrays.
+
+   :param vec: Target float vector
+   :param direction: FORWARD for ascending, REVERSE for descending order
+   :raises: Sets errno to EINVAL if vec is NULL
+
+   Example with dynamic vector:
+
+   .. code-block:: c
+
+      float_v* vec = init_float_vector(5);
+      
+      // Add some unsorted values
+      push_back_float_vector(vec, 5.0f);
+      push_back_float_vector(vec, 3.0f);
+      push_back_float_vector(vec, 4.0f);
+      push_back_float_vector(vec, 1.0f);
+      push_back_float_vector(vec, 2.0f);
+      
+      printf("Before sort: ");
+      for (size_t i = 0; i < f_size(vec); i++) {
+          printf("%.1f ", float_vector_index(vec, i));
+      }
+      printf("\n");
+      
+      // Sort in ascending order
+      sort_float_vector(vec, FORWARD);
+      
+      printf("Ascending:   ");
+      for (size_t i = 0; i < f_size(vec); i++) {
+          printf("%.1f ", float_vector_index(vec, i));
+      }
+      printf("\n");
+      
+      // Sort in descending order
+      sort_float_vector(vec, REVERSE);
+      
+      printf("Descending:  ");
+      for (size_t i = 0; i < f_size(vec); i++) {
+          printf("%.1f ", float_vector_index(vec, i));
+      }
+      printf("\n");
+      
+      free_float_vector(vec);
+
+   Output::
+
+      Before sort: 5.0 3.0 4.0 1.0 2.0
+      Ascending:   1.0 2.0 3.0 4.0 5.0
+      Descending:  5.0 4.0 3.0 2.0 1.0
+
+   Example with static array:
+
+   .. code-block:: c
+
+      float_v arr = init_float_array(4);
+      
+      // Add unsorted values
+      push_back_float_vector(&arr, 4.0f);
+      push_back_float_vector(&arr, 1.0f);
+      push_back_float_vector(&arr, 3.0f);
+      push_back_float_vector(&arr, 2.0f);
+      
+      printf("Before sort: ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+      
+      sort_float_vector(&arr, FORWARD);
+      
+      printf("After sort:  ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+
+   Output::
+
+      Before sort: 4.0 1.0 3.0 2.0
+      After sort:  1.0 2.0 3.0 4.0
+
+   Implementation Details:
+
+   The sorting algorithm uses a hybrid approach combining QuickSort with
+   Insertion Sort for optimal performance:
+
+   * QuickSort with median-of-three pivot selection for large partitions
+   * Insertion Sort for small partitions (less than 10 elements)
+   * Tail-call optimization to reduce stack usage
+   * Special handling for duplicate elements and special values (NaN, infinities)
+
+   Performance Characteristics:
+
+   * Average time complexity: O(n log n)
+   * Worst case time complexity: O(n²) (rare due to median-of-three)
+   * Space complexity: O(log n) for recursion stack
+   * In-place sorting: No additional memory allocation
+   * Stable: No, equal elements may be reordered
+   * Adaptive: Yes, performs better on partially sorted arrays
+
+   Special Value Handling:
+
+   * NaN values are moved to the end of the array
+   * Infinities are properly ordered (-∞ < finite numbers < +∞)
+   * Zero values (both -0.0 and +0.0) are treated as equal
+
+   .. note::
+
+      For very small arrays (n < 10), the function automatically uses Insertion Sort
+      instead of QuickSort, as this is more efficient for small datasets.
