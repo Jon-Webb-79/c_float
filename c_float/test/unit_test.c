@@ -66,7 +66,11 @@ int main(int argc, const char * argv[]) {
         cmocka_unit_test(test_pop_any_basic),
         cmocka_unit_test(test_pop_any_errors),
         cmocka_unit_test(test_pop_any_static),
-        cmocka_unit_test(test_pop_any_special_values)
+        cmocka_unit_test(test_pop_any_special_values),
+        cmocka_unit_test(test_reverse_basic),
+        cmocka_unit_test(test_reverse_errors),
+        cmocka_unit_test(test_reverse_static),
+        cmocka_unit_test(test_reverse_special_values)
 	};
 	return cmocka_run_group_tests(test_one, NULL, NULL);
 }

@@ -355,8 +355,14 @@ void reverse_float_vector(float_v* vec) {
         errno = EINVAL;
         return;
     }
-    int i = 0;
-    int j = vec->len - 1;
+
+    if (vec->len == 0) {
+        errno = ENODATA;
+        return;
+    }
+
+    size_t i = 0;
+    size_t j = vec->len - 1;
     while (i < j) {
        swap_float(&vec->data[i], &vec->data[j]);
        i++;

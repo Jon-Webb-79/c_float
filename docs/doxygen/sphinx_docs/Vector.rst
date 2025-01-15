@@ -908,3 +908,101 @@ float_vector_alloc
 
       Allocation size: 5
 
+Re-Order and Sort Data 
+----------------------
+These functions can be used to change the order of data in a dynamically allocated 
+or statically allocated ``float`` array.
+
+reverse_float_vector
+~~~~~~~~~~~~~~~~~~~~
+.. c:function:: void reverse_float_vector(float_v* vec)
+
+   Reverses the order of elements in a float vector or array. The operation is performed
+   in place without allocating additional memory.
+
+   :param vec: Target float vector
+   :raises: Sets errno to EINVAL for NULL input, ENODATA if vector is empty
+
+   Example with dynamic vector:
+
+   .. code-block:: c
+
+      float_v* vec = init_float_vector(4);
+      
+      // Add some values
+      push_back_float_vector(vec, 1.0f);
+      push_back_float_vector(vec, 2.0f);
+      push_back_float_vector(vec, 3.0f);
+      
+      printf("Before reverse: ");
+      for (size_t i = 0; i < f_size(vec); i++) {
+          printf("%.1f ", float_vector_index(vec, i));
+      }
+      printf("\n");
+      
+      reverse_float_vector(vec);
+      
+      printf("After reverse:  ");
+      for (size_t i = 0; i < f_size(vec); i++) {
+          printf("%.1f ", float_vector_index(vec, i));
+      }
+      printf("\n");
+      
+      free_float_vector(vec);
+
+   Output::
+
+      Before reverse: 1.0 2.0 3.0
+      After reverse:  3.0 2.0 1.0
+
+   Example with static array:
+
+   .. code-block:: c
+
+      float_v arr = init_float_array(3);
+      
+      // Add values
+      push_back_float_vector(&arr, 1.0f);
+      push_back_float_vector(&arr, 2.0f);
+      push_back_float_vector(&arr, 3.0f);
+      
+      printf("Before reverse: ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+      
+      reverse_float_vector(&arr);
+      
+      printf("After reverse:  ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+
+   Output::
+
+      Before reverse: 1.0 2.0 3.0
+      After reverse:  3.0 2.0 1.0
+
+   Error Handling:
+
+   * If vec is NULL or has invalid data pointer:
+     - Sets errno to EINVAL
+     - Returns without modifying data
+   
+   * If vector or array is empty:
+     - Sets errno to ENODATA
+     - Returns without modifying data
+
+   Performance Characteristics:
+
+   * Time complexity: O(n) where n is the number of elements
+   * Space complexity: O(1) as reversal is performed in place
+   * Uses constant extra space regardless of vector size
+   
+   .. note::
+
+      The function performs the reversal in place by swapping pairs of elements
+      from the ends toward the middle. This approach minimizes memory usage and
+      maintains efficiency for both small and large vectors.

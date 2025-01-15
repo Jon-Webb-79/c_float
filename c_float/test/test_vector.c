@@ -954,6 +954,106 @@ void test_pop_any_special_values(void **state) {
     free_float_vector(vec);
 }
 // ================================================================================ 
+// ================================================================================
+
+void test_reverse_basic(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(4);
+    assert_non_null(vec);
+    
+    // Test single element
+    push_back_float_vector(vec, 1.0f);
+    reverse_float_vector(vec);
+    assert_int_equal(f_size(vec), 1);
+    assert_float_equal(float_vector_index(vec, 0), 1.0f, 0.0001f);
+    
+    // Test even number of elements
+    push_back_float_vector(vec, 2.0f);
+    reverse_float_vector(vec);
+    assert_int_equal(f_size(vec), 2);
+    assert_float_equal(float_vector_index(vec, 0), 2.0f, 0.0001f);
+    assert_float_equal(float_vector_index(vec, 1), 1.0f, 0.0001f);
+    
+    // Test odd number of elements
+    push_back_float_vector(vec, 3.0f);
+    reverse_float_vector(vec);
+    assert_int_equal(f_size(vec), 3);
+    assert_float_equal(float_vector_index(vec, 0), 3.0f, 0.0001f);
+    assert_float_equal(float_vector_index(vec, 1), 1.0f, 0.0001f);
+    assert_float_equal(float_vector_index(vec, 2), 2.0f, 0.0001f);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_reverse_errors(void **state) {
+    (void) state;
+    
+    // Test NULL vector
+    errno = 0;
+    reverse_float_vector(NULL);
+    assert_int_equal(errno, EINVAL);
+    
+    // Test invalid data pointer
+    float_v vec = {0};
+    vec.data = NULL;
+    errno = 0;
+    reverse_float_vector(&vec);
+    assert_int_equal(errno, EINVAL);
+    
+    // Test empty vector
+    float_v* empty_vec = init_float_vector(1);
+    assert_non_null(empty_vec);
+    errno = 0;
+    reverse_float_vector(empty_vec);
+    assert_int_equal(errno, ENODATA);
+    
+    free_float_vector(empty_vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_reverse_static(void **state) {
+    (void) state;
+    
+    float_v arr = init_float_array(3);
+    
+    // Add test values
+    push_back_float_vector(&arr, 1.0f);
+    push_back_float_vector(&arr, 2.0f);
+    push_back_float_vector(&arr, 3.0f);
+    
+    // Test reversal
+    reverse_float_vector(&arr);
+    assert_int_equal(f_size(&arr), 3);
+    assert_float_equal(float_vector_index(&arr, 0), 3.0f, 0.0001f);
+    assert_float_equal(float_vector_index(&arr, 1), 2.0f, 0.0001f);
+    assert_float_equal(float_vector_index(&arr, 2), 1.0f, 0.0001f);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_reverse_special_values(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(3);
+    assert_non_null(vec);
+    
+    // Add special values
+    push_back_float_vector(vec, INFINITY);
+    push_back_float_vector(vec, NAN);
+    push_back_float_vector(vec, -INFINITY);
+    
+    // Test reversal
+    reverse_float_vector(vec);
+    
+    // Verify reversed order
+    assert_true(isinf(float_vector_index(vec, 0)) && float_vector_index(vec, 0) < 0.0f);  // -INFINITY
+    assert_true(isnan(float_vector_index(vec, 1)));  // NAN
+    assert_true(isinf(float_vector_index(vec, 2)) && float_vector_index(vec, 2) > 0.0f);  // INFINITY
+    
+    free_float_vector(vec);
+}
+// ================================================================================ 
 // ================================================================================ 
 #endif
 // ================================================================================
