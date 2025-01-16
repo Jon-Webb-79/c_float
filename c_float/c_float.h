@@ -349,6 +349,51 @@ float min_float_vector(float_v* vec);
  *         vec-data is NULL, or if length is 0 and returns FLT_MAX
  */
 float max_float_vector(float_v* vec);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @function sum_float_vector 
+ * @brief Returns the summation of all values in a vector or array
+ *
+ * @param vec A float vector or array object 
+ * @return The summation of all values in a vector.  Sets errno to EINVAL if vec or 
+ *         vec-data is NULL, or if length is 0 and returns FLT_MAX
+ */
+float sum_float_vector(float_v* vec);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @function average_float_vector 
+ * @brief Returns the average of all values in a vector or array
+ *
+ * @param vec A float vector or array object 
+ * @return The average of all values in a vector.  Sets errno to EINVAL if vec or 
+ *         vec-data is NULL, or if length is 0 and returns FLT_MAX
+ */
+float average_float_vector(float_v* vec);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @function stdev_float_vector 
+ * @brief Returns the standard deviation of all values in a vector or array
+ *
+ * @param vec A float vector or array object 
+ * @return The standard deviation of all values in a vector.  Sets errno to EINVAL if vec or 
+ *         vec-data is NULL, or if length is 0 and returns FLT_MAX
+ */
+float stdev_float_vector(float_v* vec);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @function cum_sum_float_vector 
+ * @brief Returns a dynamically allocated array containing the cumulative sum of all 
+ *        values in vec
+ *
+ * @param vec A float vector or array object 
+ * @return A float_v object with the cumulative sum of all values in vec.  Sets errno to EINVAL if vec or 
+ *         vec-data is NULL, or if length is 0 and returns FLT_MAX
+ */
+float_v* cum_sum_float_vector(float_v* vec);
 // ================================================================================ 
 // ================================================================================ 
 

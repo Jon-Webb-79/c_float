@@ -1606,6 +1606,321 @@ void test_min_max_errors(void **state) {
 }
 // ================================================================================ 
 // ================================================================================ 
+
+void test_sum_basic(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(4);
+    assert_non_null(vec);
+    
+    // Test single value
+    push_back_float_vector(vec, 1.0f);
+    errno = 0;
+    assert_float_equal(sum_float_vector(vec), 1.0f, 0.0001f);
+    assert_int_equal(errno, 0);
+    
+    // Test multiple values
+    push_back_float_vector(vec, 2.0f);
+    push_back_float_vector(vec, 3.0f);
+    push_back_float_vector(vec, 4.0f);
+    
+    errno = 0;
+    assert_float_equal(sum_float_vector(vec), 10.0f, 0.0001f);
+    assert_int_equal(errno, 0);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_average_basic(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(4);
+    assert_non_null(vec);
+    
+    // Test single value
+    push_back_float_vector(vec, 2.0f);
+    errno = 0;
+    assert_float_equal(average_float_vector(vec), 2.0f, 0.0001f);
+    assert_int_equal(errno, 0);
+    
+    // Test multiple values
+    push_back_float_vector(vec, 4.0f);
+    push_back_float_vector(vec, 6.0f);
+    push_back_float_vector(vec, 8.0f);
+    
+    errno = 0;
+    assert_float_equal(average_float_vector(vec), 5.0f, 0.0001f);
+    assert_int_equal(errno, 0);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_sum_average_special_values(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(3);
+    assert_non_null(vec);
+    
+    // Test with infinity
+    push_back_float_vector(vec, INFINITY);
+    push_back_float_vector(vec, 1.0f);
+    push_back_float_vector(vec, 2.0f);
+    
+    errno = 0;
+    assert_true(isinf(sum_float_vector(vec)));
+    assert_int_equal(errno, 0);
+
+    errno = 0;
+    assert_true(isinf(average_float_vector(vec)));
+    assert_int_equal(errno, 0);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_sum_average_negative(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(4);
+    assert_non_null(vec);
+    
+    push_back_float_vector(vec, -1.0f);
+    push_back_float_vector(vec, -2.0f);
+    push_back_float_vector(vec, 5.0f);
+    push_back_float_vector(vec, 2.0f);
+    
+    errno = 0;
+    assert_float_equal(sum_float_vector(vec), 4.0f, 0.0001f);
+    assert_int_equal(errno, 0);
+    
+    errno = 0;
+    assert_float_equal(average_float_vector(vec), 1.0f, 0.0001f);
+    assert_int_equal(errno, 0);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_sum_average_static(void **state) {
+    (void) state;
+    
+    float_v arr = init_float_array(3);
+    
+    push_back_float_vector(&arr, 1.0f);
+    push_back_float_vector(&arr, 2.0f);
+    push_back_float_vector(&arr, 3.0f);
+    
+    errno = 0;
+    assert_float_equal(sum_float_vector(&arr), 6.0f, 0.0001f);
+    assert_int_equal(errno, 0);
+    
+    errno = 0;
+    assert_float_equal(average_float_vector(&arr), 2.0f, 0.0001f);
+    assert_int_equal(errno, 0);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_sum_average_errors(void **state) {
+    (void) state;
+    
+    // Test NULL vector
+    errno = 0;
+    assert_float_equal(sum_float_vector(NULL), FLT_MAX, 0.0001f);
+    assert_int_equal(errno, EINVAL);
+    
+    errno = 0;
+    assert_float_equal(average_float_vector(NULL), FLT_MAX, 0.0001f);
+    assert_int_equal(errno, EINVAL);
+    
+    // Test empty vector
+    float_v* vec = init_float_vector(1);
+    assert_non_null(vec);
+    
+    errno = 0;
+    assert_float_equal(sum_float_vector(vec), FLT_MAX, 0.0001f);
+    assert_int_equal(errno, EINVAL);
+    
+    errno = 0;
+    assert_float_equal(average_float_vector(vec), FLT_MAX, 0.0001f);
+    assert_int_equal(errno, EINVAL);
+    
+    free_float_vector(vec);
+}
+// ================================================================================ 
+// ================================================================================ 
+
+void test_stdev_basic(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(4);
+    assert_non_null(vec);
+    
+    // Dataset with known standard deviation
+    push_back_float_vector(vec, 2.0f);
+    push_back_float_vector(vec, 4.0f);
+    push_back_float_vector(vec, 4.0f);
+    push_back_float_vector(vec, 6.0f);
+    
+    // Mean = 4.0, variance = 2.0, stdev = sqrt(2.0)
+    errno = 0;
+    assert_float_equal(stdev_float_vector(vec), sqrt(2.0f), 0.0001f);
+    assert_int_equal(errno, 0);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_stdev_single_value(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(1);
+    assert_non_null(vec);
+    
+    push_back_float_vector(vec, 2.0f);
+    
+    errno = 0;
+    float result = stdev_float_vector(vec);
+    assert_float_equal(result, FLT_MAX, 0.0001f);  // Standard deviation of single value is 0
+    assert_int_equal(errno, ENODATA);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_stdev_same_values(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(3);
+    assert_non_null(vec);
+    
+    // All same values should give stdev of 0
+    push_back_float_vector(vec, 2.0f);
+    push_back_float_vector(vec, 2.0f);
+    push_back_float_vector(vec, 2.0f);
+    
+    errno = 0;
+    assert_float_equal(stdev_float_vector(vec), 0.0f, 0.0001f);
+    assert_int_equal(errno, 0);
+    
+    free_float_vector(vec);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_cum_sum_basic(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(4);
+    assert_non_null(vec);
+    
+    push_back_float_vector(vec, 1.0f);
+    push_back_float_vector(vec, 2.0f);
+    push_back_float_vector(vec, 3.0f);
+    push_back_float_vector(vec, 4.0f);
+    
+    float_v* cum_sum = cum_sum_float_vector(vec);
+    assert_non_null(cum_sum);
+    assert_int_equal(f_size(cum_sum), 4);
+    
+    // Check cumulative sums: 1, 3, 6, 10
+    assert_float_equal(float_vector_index(cum_sum, 0), 1.0f, 0.0001f);
+    assert_float_equal(float_vector_index(cum_sum, 1), 3.0f, 0.0001f);
+    assert_float_equal(float_vector_index(cum_sum, 2), 6.0f, 0.0001f);
+    assert_float_equal(float_vector_index(cum_sum, 3), 10.0f, 0.0001f);
+    
+    free_float_vector(vec);
+    free_float_vector(cum_sum);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_cum_sum_negative(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(4);
+    assert_non_null(vec);
+    
+    push_back_float_vector(vec, 1.0f);
+    push_back_float_vector(vec, -2.0f);
+    push_back_float_vector(vec, 3.0f);
+    push_back_float_vector(vec, -4.0f);
+    
+    float_v* cum_sum = cum_sum_float_vector(vec);
+    assert_non_null(cum_sum);
+    
+    // Check cumulative sums: 1, -1, 2, -2
+    assert_float_equal(float_vector_index(cum_sum, 0), 1.0f, 0.0001f);
+    assert_float_equal(float_vector_index(cum_sum, 1), -1.0f, 0.0001f);
+    assert_float_equal(float_vector_index(cum_sum, 2), 2.0f, 0.0001f);
+    assert_float_equal(float_vector_index(cum_sum, 3), -2.0f, 0.0001f);
+    
+    free_float_vector(vec);
+    free_float_vector(cum_sum);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_stdev_cum_sum_special_values(void **state) {
+    (void) state;
+    
+    float_v* vec = init_float_vector(3);
+    assert_non_null(vec);
+    
+    // Test with infinity
+    push_back_float_vector(vec, INFINITY);
+    push_back_float_vector(vec, 1.0f);
+    push_back_float_vector(vec, 2.0f);
+    
+    errno = 0;
+    assert_true(isinf(stdev_float_vector(vec)));
+
+    float_v* cum_sum = cum_sum_float_vector(vec);
+    assert_non_null(cum_sum);
+    assert_true(isinf(float_vector_index(cum_sum, 0)));
+    assert_true(isinf(float_vector_index(cum_sum, 1)));
+    assert_true(isinf(float_vector_index(cum_sum, 2)));
+    
+    free_float_vector(vec);
+    free_float_vector(cum_sum);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_stdev_cum_sum_errors(void **state) {
+    (void) state;
+    
+    // Test NULL vector
+    errno = 0;
+    assert_float_equal(stdev_float_vector(NULL), FLT_MAX, 0.0001f);
+    assert_int_equal(errno, EINVAL);
+    
+    assert_null(cum_sum_float_vector(NULL));
+    assert_int_equal(errno, EINVAL);
+    
+    // Test empty vector
+    float_v* vec = init_float_vector(1);
+    assert_non_null(vec);
+    
+    errno = 0;
+    assert_float_equal(stdev_float_vector(vec), FLT_MAX, 0.0001f);
+    assert_int_equal(errno, EINVAL);
+    
+    assert_null(cum_sum_float_vector(vec));
+    assert_int_equal(errno, EINVAL);
+    
+    free_float_vector(vec);
+}
+
+/* Add to your test array */
+const struct CMUnitTest stat_tests[] = {
+    cmocka_unit_test(test_stdev_basic),
+    cmocka_unit_test(test_stdev_single_value),
+    cmocka_unit_test(test_stdev_same_values),
+    cmocka_unit_test(test_cum_sum_basic),
+    cmocka_unit_test(test_cum_sum_negative),
+    cmocka_unit_test(test_stdev_cum_sum_special_values),
+    cmocka_unit_test(test_stdev_cum_sum_errors),
+};
+// ================================================================================ 
+// ================================================================================ 
 #endif
 // ================================================================================
 // ================================================================================

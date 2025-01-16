@@ -597,6 +597,109 @@ float max_float_vector(float_v* vec) {
     }
     return max;  // Return max instead of min
 }
+// -------------------------------------------------------------------------------- 
+
+float sum_float_vector(float_v* vec) {
+    if (!vec || !vec->data || vec->len == 0) {
+        errno = EINVAL;
+        return FLT_MAX;
+    }
+    
+    float sum = 0;
+    for (size_t i = 0; i < vec->len; i++) {
+        // Check for NaN
+        if (isnan(vec->data[i])) {
+            errno = EINVAL;
+            return FLT_MAX;
+        }
+        sum += vec->data[i];
+    }
+    return sum;
+}
+// -------------------------------------------------------------------------------- 
+
+float average_float_vector(float_v* vec) {
+    if (!vec || !vec->data || vec->len == 0) {
+        errno = EINVAL;
+        return FLT_MAX;
+    }
+    errno = 0; 
+    float sum = sum_float_vector(vec);
+    if (errno != 0) {
+        return FLT_MAX;
+    }
+    
+    return sum / vec->len;
+}
+// -------------------------------------------------------------------------------- 
+
+float stdev_float_vector(float_v* vec) {
+    if (!vec || !vec->data || vec->len == 0) {
+        errno = EINVAL;
+        return FLT_MAX;
+    }
+    if (vec->len == 1) {
+        errno = ENODATA;
+        return FLT_MAX;
+    }
+    
+    float avg = average_float_vector(vec);
+    if (errno != 0) {
+        return FLT_MAX;
+    }
+    
+    float sum_sq_diff = 0;
+    for (size_t i = 0; i < vec->len; i++) {
+        float diff = vec->data[i] - avg;
+        float sq_diff = diff * diff;
+        if (isinf(sq_diff)) {
+            errno = ERANGE;
+            return FLT_MAX;
+        }
+        if (isinf(vec->data[i])) return INFINITY;
+        sum_sq_diff += sq_diff;
+    }
+    
+    return sqrt(sum_sq_diff / vec->len);  // or (vec->len - 1) for sample
+}
+// -------------------------------------------------------------------------------- 
+
+float_v* cum_sum_float_vector(float_v* vec) {
+    if (!vec || !vec->data || vec->len == 0) {
+        errno = EINVAL;
+        return NULL;
+    }
+    
+    float_v* new_vec = init_float_vector(vec->len);
+    if (new_vec == NULL) {
+        errno = ENOMEM;
+        return NULL;
+    }
+    
+    float sum = 0;
+    for (size_t i = 0; i < vec->len; i++) {
+        if (isnan(vec->data[i])) {
+            errno = EINVAL;
+            free_float_vector(new_vec);
+            return NULL;
+        }
+        
+        float new_sum = sum + vec->data[i];
+        if (isinf(new_sum) && !isinf(sum) && !isinf(vec->data[i])) {
+            errno = ERANGE;
+            free_float_vector(new_vec);
+            return NULL;
+        }
+        
+        sum = new_sum;
+        if (!push_back_float_vector(new_vec, sum)) {
+            free_float_vector(new_vec);
+            return NULL;  // errno already set by push_back
+        }
+    }
+    
+    return new_vec;
+}
 // ================================================================================
 // ================================================================================
 // eof

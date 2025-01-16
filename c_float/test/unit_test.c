@@ -94,7 +94,20 @@ int main(int argc, const char * argv[]) {
         cmocka_unit_test(test_max_float_basic),
         cmocka_unit_test(test_min_max_special_values),
         cmocka_unit_test(test_min_max_static_array),
-        cmocka_unit_test(test_min_max_errors)
+        cmocka_unit_test(test_min_max_errors),
+        cmocka_unit_test(test_sum_basic),
+        cmocka_unit_test(test_average_basic),
+        cmocka_unit_test(test_sum_average_special_values),
+        cmocka_unit_test(test_sum_average_negative),
+        cmocka_unit_test(test_sum_average_static),
+        cmocka_unit_test(test_sum_average_errors),
+        cmocka_unit_test(test_stdev_basic),
+        cmocka_unit_test(test_stdev_single_value),
+        cmocka_unit_test(test_stdev_same_values),
+        cmocka_unit_test(test_cum_sum_basic),
+        cmocka_unit_test(test_cum_sum_negative),
+        cmocka_unit_test(test_stdev_cum_sum_special_values),
+        cmocka_unit_test(test_stdev_cum_sum_errors)
 	};
 	return cmocka_run_group_tests(test_one, NULL, NULL);
 }

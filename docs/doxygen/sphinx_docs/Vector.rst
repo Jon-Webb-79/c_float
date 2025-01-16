@@ -1528,3 +1528,274 @@ Special Value Handling:
    When FLT_MAX is returned, always check errno to distinguish between
    an error condition and a valid FLT_MAX value that was actually present
    in the vector.
+
+Vector Statistics
+------------------
+These functions can be used to determine basic statistical parameters of a 
+vector or array.
+
+sum_float_vector
+~~~~~~~~~~~~~~~~
+.. c:function:: float sum_float_vector(float_v* vec)
+
+   Calculates the sum of all elements in a float vector. Works with both dynamic
+   vectors and static arrays.
+
+   :param vec: Target float vector
+   :returns: Sum of all elements, or FLT_MAX on error
+   :raises: Sets errno to EINVAL for NULL input, empty vector, or NaN values
+
+   Example:
+
+   .. code-block:: c
+
+      float_v* vec = init_float_vector(4);
+      
+      // Add values
+      push_back_float_vector(vec, 1.0f);
+      push_back_float_vector(vec, 2.0f);
+      push_back_float_vector(vec, 3.0f);
+      push_back_float_vector(vec, 4.0f);
+      
+      float sum = sum_float_vector(vec);
+      if (errno == 0) {
+          printf("Sum: %.1f\n", sum);
+      }
+      
+      free_float_vector(vec);
+
+   Output::
+
+      Sum: 10.0
+
+average_float_vector
+~~~~~~~~~~~~~~~~~~~~
+.. c:function:: float average_float_vector(float_v* vec)
+
+   Calculates the arithmetic mean (average) of all elements in a float vector.
+   Works with both dynamic vectors and static arrays.
+
+   :param vec: Target float vector
+   :returns: Average of all elements, or FLT_MAX on error
+   :raises: Sets errno to EINVAL for NULL input, empty vector, or NaN values
+
+   Example:
+
+   .. code-block:: c
+
+      float_v* vec = init_float_vector(4);
+      
+      // Add values
+      push_back_float_vector(vec, 2.0f);
+      push_back_float_vector(vec, 4.0f);
+      push_back_float_vector(vec, 6.0f);
+      push_back_float_vector(vec, 8.0f);
+      
+      float avg = average_float_vector(vec);
+      if (errno == 0) {
+          printf("Average: %.1f\n", avg);
+      }
+      
+      free_float_vector(vec);
+
+   Output::
+
+      Average: 5.0
+
+Example using both functions with static array:
+
+   .. code-block:: c
+
+      float_v arr = init_float_array(3);
+      
+      // Add values
+      push_back_float_vector(&arr, 1.5f);
+      push_back_float_vector(&arr, 2.5f);
+      push_back_float_vector(&arr, 3.5f);
+      
+      printf("Values:  ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+      
+      printf("Sum:     %.1f\n", sum_float_vector(&arr));
+      printf("Average: %.1f\n", average_float_vector(&arr));
+
+   Output::
+
+      Values:  1.5 2.5 3.5
+      Sum:     7.5
+      Average: 2.5
+
+Special Value Handling:
+
+* Infinity values are allowed and propagate through calculations
+* NaN values will cause the functions to return FLT_MAX and set errno to EINVAL
+* Both positive and negative zeros are handled correctly
+
+Error Handling for Both Functions:
+
+* If vec is NULL, has invalid data pointer, or is empty:
+  - Returns FLT_MAX
+  - Sets errno to EINVAL
+* If any value in the vector is NaN:
+  - Returns FLT_MAX
+  - Sets errno to EINVAL
+
+.. note::
+
+   When FLT_MAX is returned, always check errno to distinguish between
+   an error condition and a valid calculation that resulted in FLT_MAX.
+
+stdev_float_vector
+~~~~~~~~~~~~~~~~~~
+.. c:function:: float stdev_float_vector(float_v* vec)
+
+   Calculates the population standard deviation of elements in a float vector.
+   Works with both dynamic vectors and static arrays.
+
+   :param vec: Target float vector
+   :returns: Standard deviation of elements, or FLT_MAX on error
+   :raises: Sets errno to EINVAL for NULL input or empty vector
+
+   Example with dynamic vector:
+
+   .. code-block:: c
+
+      float_v* vec FLTVEC_GBC = init_float_vector(4);
+      
+      // Add values
+      push_back_float_vector(vec, 2.0f);
+      push_back_float_vector(vec, 4.0f);
+      push_back_float_vector(vec, 4.0f);
+      push_back_float_vector(vec, 6.0f);
+      
+      printf("Values: ");
+      for (size_t i = 0; i < f_size(vec); i++) {
+          printf("%.1f ", float_vector_index(vec, i));
+      }
+      printf("\n");
+      
+      float stdev = stdev_float_vector(vec);
+      if (errno == 0) {
+          printf("Standard Deviation: %.3f\n", stdev);
+      }
+
+   Output::
+
+      Values: 2.0 4.0 4.0 6.0
+      Standard Deviation: 1.414
+
+Cummulative Distribution Function (CDF)
+---------------------------------------
+
+cum_sum_float_vector
+~~~~~~~~~~~~~~~~~~~~
+.. c:function:: float_v* cum_sum_float_vector(float_v* vec)
+
+   Creates a new vector containing the cumulative sum of elements from the input vector.
+   Each element in the output vector is the sum of all elements up to and including
+   that position in the input vector. Works with both dynamic vectors and static arrays.
+
+   :param vec: Target float vector
+   :returns: New vector containing cumulative sums, or NULL on error
+   :raises: Sets errno to EINVAL for NULL input or empty vector, ENODATA for failed push operations
+
+   Example with dynamic vector:
+
+   .. code-block:: c
+
+      float_v* vec FLTVEC_GBC = init_float_vector(4);
+      
+      // Add values
+      push_back_float_vector(vec, 1.0f);
+      push_back_float_vector(vec, 2.0f);
+      push_back_float_vector(vec, 3.0f);
+      push_back_float_vector(vec, 4.0f);
+      
+      printf("Original values: ");
+      for (size_t i = 0; i < f_size(vec); i++) {
+          printf("%.1f ", float_vector_index(vec, i));
+      }
+      printf("\n");
+      
+      float_v* cum_sum = cum_sum_float_vector(vec);
+      if (cum_sum != NULL) {
+          printf("Cumulative sums: ");
+          for (size_t i = 0; i < f_size(cum_sum); i++) {
+              printf("%.1f ", float_vector_index(cum_sum, i));
+          }
+          printf("\n");
+          
+          free_float_vector(cum_sum);
+      }
+
+   Output::
+
+      Original values: 1.0 2.0 3.0 4.0
+      Cumulative sums: 1.0 3.0 6.0 10.0
+
+Example using both functions with negative values:
+
+   .. code-block:: c
+
+      float_v* vec = init_float_vector(4);
+      
+      // Add values including negatives
+      push_back_float_vector(vec, 1.0f);
+      push_back_float_vector(vec, -2.0f);
+      push_back_float_vector(vec, 3.0f);
+      push_back_float_vector(vec, -4.0f);
+      
+      printf("Values:          ");
+      for (size_t i = 0; i < f_size(vec); i++) {
+          printf("%.1f ", float_vector_index(vec, i));
+      }
+      printf("\n");
+      
+      float stdev = stdev_float_vector(vec);
+      if (errno == 0) {
+          printf("Std Deviation:   %.3f\n", stdev);
+      }
+      
+      float_v* cum_sum = cum_sum_float_vector(vec);
+      if (cum_sum != NULL) {
+          printf("Running totals:  ");
+          for (size_t i = 0; i < f_size(cum_sum); i++) {
+              printf("%.1f ", float_vector_index(cum_sum, i));
+          }
+          printf("\n");
+          
+          free_float_vector(cum_sum);
+      }
+      
+      free_float_vector(vec);
+
+   Output::
+
+      Values:          1.0 -2.0 3.0 -4.0
+      Std Deviation:   2.944
+      Running totals:  1.0 -1.0 2.0 -2.0
+
+Error Handling:
+
+* If vec is NULL, has invalid data pointer, or is empty:
+  - stdev_float_vector returns FLT_MAX and sets errno to EINVAL
+  - cum_sum_float_vector returns NULL and sets errno to EINVAL
+
+* If memory allocation fails in cum_sum_float_vector:
+  - Returns NULL
+  - Sets errno to ENODATA
+
+Special Value Handling:
+
+* Infinity values propagate through calculations
+* Result will be infinite if any calculations overflow
+* Both functions handle negative values correctly
+
+.. note::
+
+   The standard deviation calculation uses a population standard deviation
+   formula (dividing by n), not a sample standard deviation formula
+   (dividing by n-1).
