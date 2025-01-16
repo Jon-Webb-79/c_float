@@ -76,7 +76,25 @@ int main(int argc, const char * argv[]) {
         cmocka_unit_test(test_sort_duplicates),
         cmocka_unit_test(test_sort_special_values),
         cmocka_unit_test(test_sort_static_array),
-        cmocka_unit_test(test_sort_errors)
+        cmocka_unit_test(test_sort_errors),
+        cmocka_unit_test(test_trim_basic),
+        cmocka_unit_test(test_trim_empty_vector),
+        cmocka_unit_test(test_trim_static_array),
+        cmocka_unit_test(test_trim_already_optimal),
+        cmocka_unit_test(test_trim_errors),
+        cmocka_unit_test(test_binary_search_basic),
+        cmocka_unit_test(test_binary_search_tolerance),
+        cmocka_unit_test(test_binary_search_with_sort),
+        cmocka_unit_test(test_binary_search_errors),
+        cmocka_unit_test(test_binary_search_static),
+        cmocka_unit_test(test_update_float_vector_nominal),
+        cmocka_unit_test(test_update_float_vector_bad_index),
+        cmocka_unit_test(test_update_float_vector_null),
+        cmocka_unit_test(test_min_float_basic),
+        cmocka_unit_test(test_max_float_basic),
+        cmocka_unit_test(test_min_max_special_values),
+        cmocka_unit_test(test_min_max_static_array),
+        cmocka_unit_test(test_min_max_errors)
 	};
 	return cmocka_run_group_tests(test_one, NULL, NULL);
 }

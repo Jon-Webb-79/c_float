@@ -288,6 +288,67 @@ void swap_float(float* a, float* b);
 *         Sets errno to EINVAL if vec is NULL or invalid
 */
 void sort_float_vector(float_v* vec, iter_dir direction);
+// -------------------------------------------------------------------------------- 
+
+/**
+* @function trim_float_vector
+* @brief Trims all un-necessary memory from a vector
+*
+* @param vec float vector to trim
+* @return void
+*         Sets errno to EINVAL if vec is NULL or invalid
+*/
+void trim_float_vector(float_v* vec);
+// -------------------------------------------------------------------------------- 
+
+/**
+* @function binary_search_float_vector
+* @brief Searches a float vector to find the index where a value exists
+*
+* @param vec float vector object
+* @param value The value to search for
+* @param tolerance The float tolerance for finding a value 
+* @param sort_first true if the vector or array needs to be sorted, false otherwise
+* @return The index where a value exists, LONG_MAX if the value is not in the array.
+*         Sets errno to EINVAL if vec is NULL or invalid, ENODATA if the array is 
+*         not populated
+*/
+size_t binary_search_float_vector(float_v* vec, float value, float tolerance, bool sort_first);
+// -------------------------------------------------------------------------------- 
+
+/**
+* @function update_float_vector
+* @brief Replaces the value of a vector at a specific index
+*
+* @param vec float vector object
+* @param index The index where data will be replaced
+* @param replacement_value The replacement value
+* @return void, Sets errno to EINVAL if vec does not exsist, or ERANGE 
+*         if the index is out of bounds
+*/
+void update_float_vector(float_v* vec, size_t index, float replacement_value);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @function min_float_vector 
+ * @brief Returns the minimum value in a vector or array 
+ *
+ * @param vec A float vector or array object 
+ * @return The minimum value in a vector.  Sets errno to EINVAL if vec or 
+ *         vec-data is NULL, or if length is 0 and returns FLT_MAX
+ */
+float min_float_vector(float_v* vec);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @function max_float_vector 
+ * @brief Returns the maximum value in a vector or array 
+ *
+ * @param vec A float vector or array object 
+ * @return The maximum value in a vector.  Sets errno to EINVAL if vec or 
+ *         vec-data is NULL, or if length is 0 and returns FLT_MAX
+ */
+float max_float_vector(float_v* vec);
 // ================================================================================ 
 // ================================================================================ 
 

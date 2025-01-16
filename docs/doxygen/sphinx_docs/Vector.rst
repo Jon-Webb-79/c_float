@@ -145,6 +145,92 @@ free_float_vector
    The free_float_vector() function should only be used with dynamically allocated
    vectors created by init_float_vector(). Attempting to free a static
 
+trim_float_vector
+~~~~~~~~~~~~~~~~~
+.. c:function:: void trim_float_vector(float_v* vec)
+
+   Reduces the allocated memory of a float vector to match its current size,
+   eliminating any unused capacity. This operation has no effect on static arrays
+   or vectors that are already at optimal capacity.
+
+   :param vec: Target float vector
+   :raises: Sets errno to EINVAL for NULL input, ENODATA if vector is empty,
+           ERANGE for size_t overflow, ENOMEM if reallocation fails
+
+   Example with dynamic vector:
+
+   .. code-block:: c
+
+      float_v* vec FLTVEC_GBC = init_float_vector(10);  // Allocate space for 10 floats
+      
+      // Add 3 values
+      push_back_float_vector(vec, 1.0f);
+      push_back_float_vector(vec, 2.0f);
+      push_back_float_vector(vec, 3.0f);
+      
+      printf("Before trim: size = %zu, capacity = %zu\n", 
+             f_size(vec), f_alloc(vec));
+      
+      trim_float_vector(vec);
+      
+      printf("After trim:  size = %zu, capacity = %zu\n", 
+             f_size(vec), f_alloc(vec));
+      
+   Output::
+
+      Before trim: size = 3, capacity = 10
+      After trim:  size = 3, capacity = 3
+
+   Example with static array:
+
+   .. code-block:: c
+
+      float_v arr = init_float_array(5);
+      
+      // Add some values
+      push_back_float_vector(&arr, 1.0f);
+      push_back_float_vector(&arr, 2.0f);
+      
+      printf("Before trim: size = %zu, capacity = %zu\n", 
+             f_size(&arr), f_alloc(&arr));
+      
+      trim_float_vector(&arr);  // No effect on static arrays
+      
+      printf("After trim:  size = %zu, capacity = %zu\n", 
+             f_size(&arr), f_alloc(&arr));
+
+   Output::
+
+      Before trim: size = 2, capacity = 5
+      After trim:  size = 2, capacity = 5
+
+   Error Handling:
+
+   * If vec is NULL or has invalid data pointer:
+     - Sets errno to EINVAL
+     - Returns without modification
+   
+   * If vector is empty:
+     - Sets errno to ENODATA
+     - Returns without modification
+   
+   * If memory reallocation fails:
+     - Sets errno to ENOMEM
+     - Returns without modification
+     - Original vector remains unchanged
+
+   The following conditions result in no modification and no error:
+
+   * Static arrays (alloc_type == STATIC)
+   * Vectors where capacity equals size
+   
+   .. note::
+
+      This function is useful for reclaiming unused memory in vectors that have
+      shrunk significantly from their peak size. However, frequent trimming
+      can be counterproductive if the vector size fluctuates often, as it
+      may lead to repeated allocations when the vector grows again.
+
 Automatic Cleanup
 -----------------
 
@@ -492,6 +578,99 @@ insert_float_vector
       The valid range for index is [0, length]. An index equal to the length
       performs an append operation. Any index greater than the length will
       result in ERANGE error.
+
+update_float_vector
+~~~~~~~~~~~~~~~~~~~
+.. c:function:: void update_float_vector(float_v* vec, size_t index, float replacement_value)
+
+   Updates a single element in a float vector at the specified index with a new value.
+   Works with both dynamic vectors and static arrays.
+
+   :param vec: Target float vector
+   :param index: Position of element to update (0 to len-1)
+   :param replacement_value: New value to store at the specified index
+   :raises: Sets errno to EINVAL for NULL input or empty vector,
+           ERANGE for index out of bounds
+
+   Example with dynamic vector:
+
+   .. code-block:: c
+
+      float_v* vec FLTVEC_GBC = init_float_vector(3);
+      
+      // Add initial values
+      push_back_float_vector(vec, 1.0f);
+      push_back_float_vector(vec, 2.0f);
+      push_back_float_vector(vec, 3.0f);
+      
+      printf("Before update: ");
+      for (size_t i = 0; i < f_size(vec); i++) {
+          printf("%.1f ", float_vector_index(vec, i));
+      }
+      printf("\n");
+      
+      // Update middle value
+      update_float_vector(vec, 1, 5.0f);
+      
+      printf("After update:  ");
+      for (size_t i = 0; i < f_size(vec); i++) {
+          printf("%.1f ", float_vector_index(vec, i));
+      }
+      printf("\n");
+
+   Output::
+
+      Before update: 1.0 2.0 3.0
+      After update:  1.0 5.0 3.0
+
+   Example with static array:
+
+   .. code-block:: c
+
+      float_v arr = init_float_array(3);
+      
+      // Add values
+      push_back_float_vector(&arr, 1.0f);
+      push_back_float_vector(&arr, 2.0f);
+      push_back_float_vector(&arr, 3.0f);
+      
+      printf("Before update: ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+      
+      // Update first and last values
+      update_float_vector(&arr, 0, 10.0f);
+      update_float_vector(&arr, 2, 30.0f);
+      
+      printf("After update:  ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.1f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+
+   Output::
+
+      Before update: 1.0 2.0 3.0
+      After update:  10.0 2.0 30.0
+
+   Error Handling:
+
+   * If vec is NULL, has invalid data pointer, or is empty:
+     - Sets errno to EINVAL
+     - Returns without modification
+   
+   * If index is out of bounds:
+     - Sets errno to ERANGE
+     - Returns without modification
+
+   .. note::
+
+      This function provides direct element access for updating values. Unlike
+      some other operations, it works identically for both dynamic vectors
+      and static arrays since it doesn't modify the container's size or
+      capacity.
 
 Data Removal
 ------------
@@ -1124,3 +1303,228 @@ sort_float_vector
 
       For very small arrays (n < 10), the function automatically uses Insertion Sort
       instead of QuickSort, as this is more efficient for small datasets.
+
+Search Vector 
+-------------
+
+binary_search_float_vector
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. c:function:: size_t binary_search_float_vector(float_v* vec, float value, float tolerance, bool sort_first)
+
+   Performs a binary search on a float vector to find a value within the specified
+   tolerance. Can optionally sort the vector before searching. Returns the index of
+   the first matching value found, or LONG_MAX if not found.
+
+   :param vec: Target float vector
+   :param value: Float value to search for
+   :param tolerance: Maximum allowed difference between values to consider a match
+   :param sort_first: If true, sorts the vector before searching
+   :returns: Index of found value, or LONG_MAX if not found
+   :raises: Sets errno to EINVAL for NULL input, ENODATA if vector is empty
+
+   Example with ordered vector:
+
+   .. code-block:: c
+
+      float_v* vec = init_float_vector(5);
+      
+      // Add sorted values
+      push_back_float_vector(vec, 1.0f);
+      push_back_float_vector(vec, 2.0f);
+      push_back_float_vector(vec, 3.0f);
+      push_back_float_vector(vec, 4.0f);
+      push_back_float_vector(vec, 5.0f);
+      
+      // Search for exact value
+      size_t index = binary_search_float_vector(vec, 3.0f, 0.0001f, false);
+      if (index != LONG_MAX) {
+          printf("Found 3.0 at index %zu\n", index);
+      }
+      
+      // Search with tolerance
+      index = binary_search_float_vector(vec, 2.95f, 0.1f, false);
+      if (index != LONG_MAX) {
+          printf("Found value near 2.95 at index %zu\n", index);
+      }
+      
+      free_float_vector(vec);
+
+   Output::
+
+      Found 3.0 at index 2
+      Found value near 2.95 at index 2
+
+   Example with unordered vector:
+
+   .. code-block:: c
+
+      float_v* vec = init_float_vector(5);
+      
+      // Add unsorted values
+      push_back_float_vector(vec, 5.0f);
+      push_back_float_vector(vec, 2.0f);
+      push_back_float_vector(vec, 4.0f);
+      push_back_float_vector(vec, 1.0f);
+      push_back_float_vector(vec, 3.0f);
+      
+      // Search with auto-sort
+      size_t index = binary_search_float_vector(vec, 4.0f, 0.0001f, true);
+      if (index != LONG_MAX) {
+          printf("Found 4.0 at index %zu\n", index);
+      }
+      
+      // Vector is now sorted for subsequent searches
+      index = binary_search_float_vector(vec, 2.0f, 0.0001f, false);
+      if (index != LONG_MAX) {
+          printf("Found 2.0 at index %zu\n", index);
+      }
+      
+      free_float_vector(vec);
+
+   Output::
+
+      Found 4.0 at index 3
+      Found 2.0 at index 1
+
+   Error Handling:
+
+   * If vec is NULL or has invalid data pointer:
+     - Returns LONG_MAX
+     - Sets errno to EINVAL
+   
+   * If vector is empty:
+     - Returns LONG_MAX
+     - Sets errno to ENODATA
+   
+   * If value is not found within tolerance:
+     - Returns LONG_MAX
+     - Does not set errno
+
+   Performance Characteristics:
+
+   * Time Complexity:
+     - O(log n) if vector is sorted and sort_first is false
+     - O(n log n) if sort_first is true due to sorting overhead
+   * Space Complexity: O(1)
+
+   .. note::
+
+      The tolerance parameter allows for approximate matches, which is useful when
+      working with floating-point values that may have small representation
+      errors. Setting tolerance to 0.0f requires an exact match.
+
+Min and Max Values 
+------------------
+The following functions can be used to find the maximum and minimum values 
+in a dynamically allocated vector or a statically allocated array.
+
+min_float_vector
+~~~~~~~~~~~~~~~~
+.. c:function:: float min_float_vector(float_v* vec)
+
+   Returns the minimum value in a float vector. Works with both dynamic vectors
+   and static arrays.
+
+   :param vec: Target float vector
+   :returns: Minimum value in vector, or FLT_MAX on error
+   :raises: Sets errno to EINVAL for NULL input, empty vector, or invalid data pointer
+
+   Example:
+
+   .. code-block:: c
+
+      float_v* vec FLTVEC_GBC = init_float_vector(5);
+      
+      // Add values
+      push_back_float_vector(vec, 3.0f);
+      push_back_float_vector(vec, 1.0f);
+      push_back_float_vector(vec, 4.0f);
+      push_back_float_vector(vec, -2.0f);
+      push_back_float_vector(vec, 5.0f);
+      
+      float min_val = min_float_vector(vec);
+      if (errno == 0) {
+          printf("Minimum value: %.1f\n", min_val);
+      }
+      
+   Output::
+
+      Minimum value: -2.0
+
+max_float_vector
+~~~~~~~~~~~~~~~~
+.. c:function:: float max_float_vector(float_v* vec)
+
+   Returns the maximum value in a float vector. Works with both dynamic vectors
+   and static arrays.
+
+   :param vec: Target float vector
+   :returns: Maximum value in vector, or FLT_MAX on error
+   :raises: Sets errno to EINVAL for NULL input, empty vector, or invalid data pointer
+
+   Example:
+
+   .. code-block:: c
+
+      float_v* vec FLTVEC_GBC = init_float_vector(5);
+      
+      // Add values
+      push_back_float_vector(vec, 3.0f);
+      push_back_float_vector(vec, 1.0f);
+      push_back_float_vector(vec, 4.0f);
+      push_back_float_vector(vec, -2.0f);
+      push_back_float_vector(vec, 5.0f);
+      
+      float max_val = max_float_vector(vec);
+      if (errno == 0) {
+          printf("Maximum value: %.1f\n", max_val);
+      }
+
+   Output::
+
+      Maximum value: 5.0
+
+Example using both functions with static array:
+
+   .. code-block:: c
+
+      float_v arr = init_float_array(4);
+      
+      // Add values
+      push_back_float_vector(&arr, 3.14f);
+      push_back_float_vector(&arr, -1.5f);
+      push_back_float_vector(&arr, 2.718f);
+      push_back_float_vector(&arr, 0.0f);
+      
+      printf("Values: ");
+      for (size_t i = 0; i < f_size(&arr); i++) {
+          printf("%.3f ", float_vector_index(&arr, i));
+      }
+      printf("\n");
+      
+      printf("Min: %.3f\n", min_float_vector(&arr));
+      printf("Max: %.3f\n", max_float_vector(&arr));
+
+   Output::
+
+      Values: 3.140 -1.500 2.718 0.000
+      Min: -1.500
+      Max: 3.140
+
+Error Handling for Both Functions:
+
+* If vec is NULL, has invalid data pointer, or is empty:
+  - Returns FLT_MAX
+  - Sets errno to EINVAL
+
+Special Value Handling:
+
+* NaN values are ignored
+* Infinities are properly compared
+* Both positive and negative zeros are treated as equal
+
+.. note::
+
+   When FLT_MAX is returned, always check errno to distinguish between
+   an error condition and a valid FLT_MAX value that was actually present
+   in the vector.

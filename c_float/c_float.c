@@ -18,6 +18,7 @@
 #include <float.h>
 #include <limits.h>
 #include <stdint.h>
+#include <math.h>
 
 //static const float LOAD_FACTOR_THRESHOLD = 0.7;
 static const size_t VEC_THRESHOLD = 1 * 1024 * 1024;  // 1 MB
@@ -469,6 +470,132 @@ void sort_float_vector(float_v* vec, iter_dir direction) {
     if (vec->len < 2) return;
     
     _quicksort_float(vec->data, 0, vec->len - 1, direction);
+}
+// -------------------------------------------------------------------------------- 
+
+void trim_float_vector(float_v* vec) {
+    if (!vec || !vec->data) {
+        errno = EINVAL;
+        return;
+    }
+    
+    if (vec->alloc_type == STATIC || vec->len == vec->alloc) {
+        return;
+    }
+   
+    if (vec->len == 0) {
+        errno = ENODATA;
+        return;
+    }
+
+    // Check for overflow
+    if (vec->len > SIZE_MAX / sizeof(float)) {
+        errno = ERANGE;
+        return;
+    }
+    
+    float* ptr = realloc(vec->data, sizeof(float) * vec->len);
+    if (ptr == NULL) {
+        errno = ENOMEM;
+        return;
+    }
+    
+    vec->data = ptr;
+    vec->alloc = vec->len;
+}
+// --------------------------------------------------------------------------------
+
+size_t binary_search_float_vector(float_v* vec, float value, float tolerance, bool sort_first) {
+    if (!vec || !vec->data) {
+        errno = EINVAL;
+        return LONG_MAX;
+    }
+    
+    if (vec->len == 0) {
+        errno = ENODATA;
+        return LONG_MAX;
+    }
+
+    if (tolerance < 0) {
+        errno = EINVAL;
+        return LONG_MAX;
+    }
+
+    if (isnan(value) || isnan(tolerance)) {
+        errno = EINVAL;
+        return LONG_MAX;
+    }
+    
+    // Sort if requested and vector has more than 1 element
+    if (sort_first && vec->len > 1) {
+        sort_float_vector(vec, FORWARD);
+    }
+    
+    size_t left = 0;
+    size_t right = vec->len - 1;
+    
+    while (left <= right) {
+        size_t mid = left + (right - left) / 2;
+        float diff = vec->data[mid] - value;
+        
+        // Check if we found a match within tolerance
+        if (fabs(diff) <= tolerance) {
+            return mid;
+        }
+        
+        if (diff < 0) {
+            left = mid + 1;
+        } else {
+            // Handle case where mid is 0 to prevent underflow
+            if (mid == 0) {
+                break;
+            }
+            right = mid - 1;
+        }
+    }
+    // The value does not exist in the array 
+    return LONG_MAX;
+}
+// -------------------------------------------------------------------------------- 
+
+void update_float_vector(float_v* vec, size_t index, float replacement_value) {
+    if (!vec || !vec->data || vec->len == 0) {
+        errno = EINVAL;
+        return;
+    }
+    if (index > vec->len -1) {
+        errno = ERANGE;
+        return;
+    }
+    vec->data[index] = replacement_value;
+}
+// -------------------------------------------------------------------------------- 
+
+float min_float_vector(float_v* vec) {
+    if (!vec || !vec->data || vec->len == 0) {
+        errno = EINVAL;
+        return FLT_MAX;
+    }
+    if (vec->len == 1) return vec->data[0];
+    float min = vec->data[0];
+    for (size_t i = 1; i < vec->len; i++) {
+        if (vec->data[i] < min) min = vec->data[i];
+    }
+    return min;
+}
+// -------------------------------------------------------------------------------- 
+
+float max_float_vector(float_v* vec) {
+    if (!vec || !vec->data || vec->len == 0) {
+        errno = EINVAL;
+        return FLT_MAX;
+    }
+    if (vec->len == 1) return vec->data[0];
+    float max = vec->data[0];  // Changed variable name
+    for (size_t i = 1; i < vec->len; i++) {
+        if (vec->data[i] > max) max = vec->data[i];  // Changed comparison and variable
+    }
+    return max;  // Return max instead of min
 }
 // ================================================================================
 // ================================================================================
