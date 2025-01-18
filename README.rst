@@ -254,4 +254,4 @@ Contribute to Code Base
 Documentation 
 =============
 This code in this repository is further documented at the 
-XXXXX website
+`Read The Docs <https://c-float.readthedocs.io/en/latest/>`_ website
