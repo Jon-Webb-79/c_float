@@ -1,12 +1,13 @@
 // ================================================================================
 // ================================================================================
 // - File:    unit_test.c
-// - Purpose: Describe the file purpose here
+// - Purpose: This file implements a cmocka test environment for the c_float 
+//            library
 //
 // Source Metadata
 // - Author:  Jonathan A. Webb
 // - Date:    January 12, 2025
-// - Version: 1.0
+// - Version: 0.1
 // - Copyright: Copyright 2025, Jon Webb Inc.
 // ================================================================================
 // ================================================================================

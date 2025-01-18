@@ -1,12 +1,13 @@
 // ================================================================================
 // ================================================================================
 // - File:    test.h
-// - Purpose: Describe the file purpose here
+// - Purpose: This file contains prototypes for unit tests related to the 
+//            c_float.h file.  This file support cmocka testing environments.
 //
 // Source Metadata
 // - Author:  Jonathan A. Webb
 // - Date:    August 31, 2022
-// - Version: 1.0
+// - Version: 0.1
 // - Copyright: Copyright 2022, Jon Webb Inc.
 // ================================================================================
 // ================================================================================
