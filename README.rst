@@ -1,4 +1,5 @@
-Welcome to C Float Documentation!
+EADME.rst
+
 =================================
 
 Working with floating-point numbers in C presents several challenges in modern software development:
@@ -249,3 +250,8 @@ Contribute to Code Base
 
 #. At this point you can build the files in the same way described in the 
    previous section and contribute to documentation.
+
+Documentation 
+=============
+This code in this repository is further documented at the 
+XXXXX website
