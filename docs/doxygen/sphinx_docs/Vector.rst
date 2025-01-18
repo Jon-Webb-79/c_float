@@ -1,3 +1,5 @@
+.. _vector_file:
+
 ******
 Vector
 ******
@@ -1086,6 +1088,95 @@ float_vector_alloc
    .. code-block:: bash 
 
       Allocation size: 5
+
+float_vector_index
+~~~~~~~~~~~~~~~~~~
+.. c:function:: const float float_vector_index(const float_v* vec, size_t index)
+
+   Safely retrieves the value at the specified index in a float vector. Works with
+   both dynamic vectors and static arrays.
+
+   :param vec: Target float vector
+   :param index: Position of element to retrieve (0 to len-1)
+   :returns: Value at specified index, or FLT_MAX on error
+   :raises: Sets errno to EINVAL for NULL input, ERANGE for index out of bounds
+
+   Example with dynamic vector:
+
+   .. code-block:: c
+
+      float_v* vec = init_float_vector(3);
+      
+      // Add values
+      push_back_float_vector(vec, 1.5f);
+      push_back_float_vector(vec, 2.5f);
+      push_back_float_vector(vec, 3.5f);
+      
+      // Access values
+      printf("First value:  %.1f\n", float_vector_index(vec, 0));
+      printf("Second value: %.1f\n", float_vector_index(vec, 1));
+      printf("Third value:  %.1f\n", float_vector_index(vec, 2));
+      
+      // Demonstrate error handling
+      float result = float_vector_index(vec, 3);  // Invalid index
+      if (result == FLT_MAX && errno == ERANGE) {
+          printf("Error: Index out of bounds\n");
+      }
+      
+      free_float_vector(vec);
+
+   Output::
+
+      First value:  1.5
+      Second value: 2.5
+      Third value:  3.5
+      Error: Index out of bounds
+
+   Example with static array:
+
+   .. code-block:: c
+
+      float_v arr = init_float_array(2);
+      
+      // Add values
+      push_back_float_vector(&arr, 10.0f);
+      push_back_float_vector(&arr, 20.0f);
+      
+      // Safe access
+      errno = 0;
+      float first = float_vector_index(&arr, 0);
+      if (errno == 0) {
+          printf("First element: %.1f\n", first);
+      }
+      
+      // Boundary check
+      errno = 0;
+      float invalid = float_vector_index(&arr, 5);
+      if (errno == ERANGE) {
+          printf("Attempted access beyond array bounds\n");
+      }
+
+   Output::
+
+      First element: 10.0
+      Attempted access beyond array bounds
+
+   Error Handling:
+
+   * If vec is NULL or has invalid data pointer:
+     - Returns FLT_MAX
+     - Sets errno to EINVAL
+   
+   * If index is out of bounds:
+     - Returns FLT_MAX
+     - Sets errno to ERANGE
+
+   .. note::
+
+      When FLT_MAX is returned, always check errno to distinguish between
+      an error condition and a valid FLT_MAX value that was stored in the
+      vector. This function provides bounds-checked access to prevent
+      buffer overflows and undefined behavior.
 
 Re-Order and Sort Data 
 ----------------------
