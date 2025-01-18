@@ -2,63 +2,80 @@
 # ================================================================================
 # ================================================================================
 # - File:    install.zsh
-# - Purpose: Install c_string library files to system directories
+# - Purpose: Install/Update c_float and c_string library files
 #
 # Source Metadata
 # - Author:  Jonathan A. Webb
 # - Date:    January 11, 2025
-# - Version: 1.0
+# - Version: 1.1
 # - Copyright: Copyright 2025, Jon Webb Inc.
 # ================================================================================
 # ================================================================================
 
 # Check if running with sudo/root permissions
 if [ "$EUID" -ne 0 ]; then
-    echo "Please run as root (use sudo)"
-    exit 1
+   echo "Please run as root (use sudo)"
+   exit 1
 fi
 
 # Detect OS
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS paths
-    INCLUDE_DIR="/usr/local/include"
-    LIB_DIR="/usr/local/lib"
+   INCLUDE_DIR="/usr/local/include"
+   LIB_DIR="/usr/local/lib"
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    # Linux paths
-    INCLUDE_DIR="/usr/include"
-    LIB_DIR="/usr/lib"
+   INCLUDE_DIR="/usr/include"
+   LIB_DIR="/usr/lib"
 else
-    echo "Unsupported operating system"
-    exit 1
+   echo "Unsupported operating system"
+   exit 1
 fi
 
-# Create directories if they don't exist
+# Create directories
 mkdir -p "$INCLUDE_DIR"
 mkdir -p "$LIB_DIR"
+BACKUP_DIR="/tmp/c_libs_backup"
+mkdir -p "$BACKUP_DIR"
 
-# Copy header file
-cp ../../c_float/c_float.h "$INCLUDE_DIR"
-if [ $? -eq 0 ]; then
-    echo "Header file installed successfully"
-else
-    echo "Error installing header file"
-    exit 1
-fi
+# Function to backup and install file
+install_file() {
+   local src=$1
+   local dest=$2
+   local desc=$3
+   
+   # Create backup if file exists
+   if [ -f "$dest" ]; then
+       echo "Updating existing $desc..."
+       local backup_path="$BACKUP_DIR/$(basename $dest).$(date +%Y%m%d_%H%M%S)"
+       cp "$dest" "$backup_path"
+       echo "Backed up to $backup_path"
+   else
+       echo "Installing new $desc..."
+   fi
+   
+   # Copy new file
+   cp "$src" "$dest"
+   if [ $? -eq 0 ]; then
+       echo "$desc installed/updated successfully"
+       chmod 644 "$dest"
+   else
+       echo "Error installing $desc"
+       return 1
+   fi
+   return 0
+}
 
-# Copy source file
-cp ../../c_float/c_float.c "$LIB_DIR"
-if [ $? -eq 0 ]; then
-    echo "Source file installed successfully"
-else
-    echo "Error installing source file"
-    exit 1
-fi
+# Install c_float files
+echo "Processing c_float library files..."
+install_file "../../c_float/c_float.h" "$INCLUDE_DIR/c_float.h" "float header" || exit 1
+install_file "../../c_float/c_float.c" "$LIB_DIR/c_float.c" "float source" || exit 1
 
-# Set permissions
-chmod 644 "$INCLUDE_DIR/c_float.h"
-chmod 644 "$LIB_DIR/c_float.c"
+# Install c_string files
+echo -e "\nProcessing c_string library files..."
+install_file "../../c_float/c_string.h" "$INCLUDE_DIR/c_string.h" "string header" || exit 1
+install_file "../../c_float/c_string.c" "$LIB_DIR/c_string.c" "string source" || exit 1
 
-echo "Installation completed successfully"
+echo -e "\nInstallation/Update completed successfully"
+echo "Backups (if any) are stored in $BACKUP_DIR"
 # ================================================================================
 # ================================================================================
 # eof
