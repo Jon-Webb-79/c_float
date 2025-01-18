@@ -18,6 +18,7 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include "c_string.h"
 // ================================================================================ 
 // ================================================================================ 
 #ifdef __cplusplus
@@ -396,6 +397,220 @@ float stdev_float_vector(float_v* vec);
 float_v* cum_sum_float_vector(float_v* vec);
 // ================================================================================ 
 // ================================================================================ 
+// DICTIONARY PROTOTYPES 
+
+/**
+ * @typedef dict_f
+ * @brief Opaque struct representing a dictionary.
+ *
+ * This structure encapsulates a hash table that maps string keys to float values.
+ * The details of the struct are hidden from the user and managed internally.
+ */
+typedef struct dict_f dict_f;
+// --------------------------------------------------------------------------------
+
+/**
+ * @brief Initializes a new dictionary.
+ *
+ * Allocates and initializes a dictionary object with a default size for the hash table.
+ *
+ * @return A pointer to the newly created dictionary, or NULL if allocation fails.
+ */
+dict_f* init_float_dict();
+// --------------------------------------------------------------------------------
+
+/**
+ * @brief Inserts a key-value pair into the dictionary.
+ *
+ * Adds a new key-value pair to the dictionary. If the key already exists, the function
+ * does nothing and returns false. If the dictionary's load factor exceeds a threshold,
+ * it automatically resizes.
+ *
+ * @param dict Pointer to the dictionary.
+ * @param key The key to insert.
+ * @param value The value associated with the key.
+ * @return true if the key-value pair was inserted successfully, false otherwise.
+ */
+bool insert_float_dict(dict_f* dict, const char* key, float value);
+// --------------------------------------------------------------------------------
+
+/**
+ * @brief Removes a key-value pair from the dictionary.
+ *
+ * Finds the specified key in the dictionary, removes the associated key-value pair,
+ * and returns the value.
+ *
+ * @param dict Pointer to the dictionary.
+ * @param key The key to remove.
+ * @return The value associated with the key if it was found and removed; FLT_MAX otherwise.
+ */
+float pop_float_dict(dict_f* dict,  const char* key);
+// --------------------------------------------------------------------------------
+
+/**
+ * @brief Retrieves the value associated with a key.
+ *
+ * Searches the dictionary for the specified key and returns the corresponding value.
+ *
+ * @param dict Pointer to the dictionary.
+ * @param key The key to search for.
+ * @return The value associated with the key, or FLT_MAX if the key is not found.
+ */
+float get_float_dict_value(const dict_f* dict, const char* key);
+// --------------------------------------------------------------------------------
+
+/**
+ * @brief Frees the memory associated with the dictionary.
+ *
+ * Releases all memory allocated for the dictionary, including all key-value pairs.
+ *
+ * @param dict Pointer to the dictionary to free.
+ */
+void free_float_dict(dict_f* dict);
+// --------------------------------------------------------------------------------
+
+/**
+ * @brief Safely frees a dictionary and sets the pointer to NULL.
+ *
+ * A wrapper around `free_dict` that ensures the dictionary pointer is also set to NULL
+ * after being freed. Useful for preventing dangling pointers.
+ *
+ * @param dict Pointer to the dictionary pointer to free.
+ */
+void _free_float_dict(dict_f** dict);
+// --------------------------------------------------------------------------------
+
+#if defined(__GNUC__) || defined (__clang__)
+    /**
+     * @macro DICT_GBC
+     * @brief A macro for enabling automatic cleanup of dict_t objects.
+     *
+     * This macro uses the cleanup attribute to automatically call `_free_vector`
+     * when the scope ends, ensuring proper memory management.
+     */
+    #define FDICT_GBC __attribute__((cleanup(_free_float_dict)))
+#endif
+// --------------------------------------------------------------------------------
+
+/**
+ * @brief Updates the value associated with a key in the dictionary.
+ *
+ * Searches for the specified key in the dictionary and updates its value.
+ * If the key does not exist, the function takes no action.
+ *
+ * @param dict Pointer to the dictionary.
+ * @param key The key to update.
+ * @param value The new value to associate with the key.
+ */
+bool update_float_dict(dict_f* dict, const char* key, float value);
+// --------------------------------------------------------------------------------
+
+/**
+ * @brief Gets the number of non-empty buckets in the dictionary.
+ *
+ * Returns the total number of buckets in the hash table that contain at least one key-value pair.
+ *
+ * @param dict Pointer to the dictionary.
+ * @return The number of non-empty buckets.
+ */
+size_t float_dict_size(const dict_f* dict);
+// --------------------------------------------------------------------------------
+
+/**
+ * @brief Gets the total capacity of the dictionary.
+ *
+ * Returns the total number of buckets currently allocated in the hash table.
+ *
+ * @param dict Pointer to the dictionary.
+ * @return The total number of buckets in the dictionary.
+ */
+size_t float_dict_alloc(const dict_f* dict);
+// --------------------------------------------------------------------------------
+
+/**
+ * @brief Gets the total number of key-value pairs in the dictionary.
+ *
+ * Returns the total number of key-value pairs currently stored in the dictionary.
+ *
+ * @param dict Pointer to the dictionary.
+ * @return The number of key-value pairs.
+ */
+size_t float_dict_hash_size(const dict_f* dict);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @brief Checks if a key exists in the dictionary without retrieving its value
+ * 
+ * @param dict Pointer to the dictionary
+ * @param key Key to check for
+ * @return bool true if key exists, false otherwise
+ */
+bool has_key_float_dict(const dict_f* dict, const char* key);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @brief Creates a deep copy of a dictionary
+ * 
+ * @param dict Pointer to the dictionary to copy
+ * @return dict_f* New dictionary containing copies of all entries, NULL on error
+ */
+dict_f* copy_float_dict(const dict_f* dict);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @brief Removes all entries from a dictionary without freeing the dictionary itself
+ * 
+ * @param dict Pointer to the dictionary to clear
+ * @return bool true if successful, false otherwise
+ */
+bool clear_float_dict(dict_f* dict);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @brief Gets all keys in the dictionary
+ * 
+ * @param dict Pointer to the dictionary
+ * @return char** Array of strings containing copies of all keys, NULL on error
+ */
+string_v* get_keys_float_dict(const dict_f* dict);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @brief Gets all values in the dictionary
+ * 
+ * @param dict Pointer to the dictionary
+ * @return float* Array containing all values, NULL on error
+ */
+float_v* get_values_float_dict(const dict_f* dict);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @brief Merges two dictionaries into a new dictionary
+ * 
+ * @param dict1 First dictionary
+ * @param dict2 Second dictionary
+ * @param overwrite If true, values from dict2 override dict1 on key conflicts
+ * @return dict_f* New dictionary containing merged entries, NULL on error
+ */
+dict_f* merge_float_dict(const dict_f* dict1, const dict_f* dict2, bool overwrite);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @brief Iterator function type for dictionary traversal
+ */
+typedef void (*dict_iterator)(const char* key, float value, void* user_data);
+
+/**
+ * @brief Iterates over all dictionary entries in insertion order
+ * 
+ * @param dict Pointer to the dictionary
+ * @param iter Iterator function to call for each entry
+ * @param user_data Optional user data passed to iterator function
+ */
+bool foreach_float_dict(const dict_f* dict, dict_iterator iter, void* user_data);
+// ================================================================================ 
+// ================================================================================ 
+// GENERIC MACROS
 
 /**
  * @macro f_size
@@ -413,7 +628,8 @@ float_v* cum_sum_float_vector(float_v* vec);
  *         Returns LONG_MAX and sets errno to EINVAL for invalid input
  */
 #define f_size(f_struct) _Generic((f_struct), \
-    float_v*: float_vector_size) (f_struct)
+    float_v*: float_vector_size, \
+    dict_f*: float_dict_size)(f_struct)
 // --------------------------------------------------------------------------------
 
 /**
@@ -432,8 +648,9 @@ float_v* cum_sum_float_vector(float_v* vec);
  *         Returns LONG_MAX and sets errno to EINVAL for invalid input
  */
 #define f_alloc(f_struct) _Generic((f_struct), \
-    float_v*: float_vector_alloc) (f_struct)
-// ================================================================================
+    float_v*: float_vector_alloc, \
+    dict_f*: float_dict_alloc) (f_struct)
+// ================================================================================ 
 // ================================================================================ 
 #ifdef __cplusplus
 }
