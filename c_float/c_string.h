@@ -1,12 +1,13 @@
 // ================================================================================
 // ================================================================================
-// - File:    cstring.h
-// - Purpose: Describe the file purpose here
+// - File:    c_string.h
+// - Purpose: This file contains the prototypes for functions used in the 
+//            c_string library/
 //
 // Source Metadata
 // - Author:  Jonathan A. Webb
 // - Date:    December 30, 2024
-// - Version: 1.0
+// - Version: 0.1
 // - Copyright: Copyright 2024, Jon Webb Inc.
 // ================================================================================
 // ================================================================================
