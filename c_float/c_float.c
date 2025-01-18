@@ -1,12 +1,13 @@
 // ================================================================================
 // ================================================================================
 // - File:    c_float.c
-// - Purpose: Describe the file purpose here
+// - Purpose: This file contains the implementation for all functions used in 
+//            the c_float library
 //
 // Source Metadata
 // - Author:  Jonathan A. Webb
 // - Date:    January 12, 2025
-// - Version: 1.0
+// - Version: 0.1
 // - Copyright: Copyright 2025, Jon Webb Inc.
 // ================================================================================
 // ================================================================================

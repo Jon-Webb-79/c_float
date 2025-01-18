@@ -1,12 +1,13 @@
 // ================================================================================
 // ================================================================================
 // - File:    c_float.h
-// - Purpose: Describe the file purpose here
+// - Purpose: This file contains prototypes for the c_float functions in the 
+//            c_float.c file.
 //
 // Source Metadata
 // - Author:  Jonathan A. Webb
 // - Date:    January 12, 2025
-// - Version: 1.0
+// - Version: 0.1
 // - Copyright: Copyright 2025, Jon Webb Inc.
 // ================================================================================
 // ================================================================================
