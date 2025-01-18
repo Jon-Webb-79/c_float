@@ -32,9 +32,17 @@ This library is particularly useful when:
 * Performing numerical computations with dynamic data sets
 * Implementing algorithms that require flexible float storage
 
-The library's encapsulated design prevents common floating-point array manipulation errors while maintaining the performance characteristics expected in C programs.
+The library's encapsulated design prevents common floating-point array manipulation 
+errors while maintaining the performance characteristics expected in C programs.
 
-This project encapsulates its functionality into the ``c_float.h`` header file, which is wrapped in the header guard ``#ifdef __cplusplus`` to allow compilation with both C and C++. The header file name ``c_float.h`` was chosen to maintain consistency with C naming conventions while avoiding potential conflicts with existing system headers.
+This project encapsulates its functionality into the ``c_float.h`` header file, 
+which is wrapped in the header guard ``#ifdef __cplusplus`` to allow compilation 
+with both C and C++. The header file name ``c_float.h`` was chosen to maintain 
+consistency with C naming conventions while avoiding potential conflicts with 
+existing system headers. This library also includes the ``c_string.h`` and 
+``c_string.c`` files to support the functions related to the ``dict_f``
+data type.
+
 
 Implementation Details
 ######################
