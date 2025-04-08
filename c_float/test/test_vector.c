@@ -1891,7 +1891,7 @@ void test_stdev_cum_sum_errors(void **state) {
     // Test NULL vector
     errno = 0;
     assert_float_equal(stdev_float_vector(NULL), FLT_MAX, 0.0001f);
-    assert_int_equal(errno, EINVAL);
+    assert_int_equal(errno, ENODATA);
     
     assert_null(cum_sum_float_vector(NULL));
     assert_int_equal(errno, EINVAL);
@@ -1899,14 +1899,14 @@ void test_stdev_cum_sum_errors(void **state) {
     // Test empty vector
     float_v* vec = init_float_vector(1);
     assert_non_null(vec);
-    
+
     errno = 0;
     assert_float_equal(stdev_float_vector(vec), FLT_MAX, 0.0001f);
-    assert_int_equal(errno, EINVAL);
-    
+    assert_int_equal(errno, ENODATA);
+
     assert_null(cum_sum_float_vector(vec));
     assert_int_equal(errno, EINVAL);
-    
+     
     free_float_vector(vec);
 }
 // -------------------------------------------------------------------------------- 

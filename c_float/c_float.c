@@ -13,6 +13,7 @@
 // ================================================================================
 // Include modules here
 
+#include <immintrin.h>  // AVX/SSE
 #include "c_float.h"
 #include <errno.h>
 #include <string.h>
@@ -579,13 +580,69 @@ float min_float_vector(float_v* vec) {
         errno = EINVAL;
         return FLT_MAX;
     }
-    if (vec->len == 1) return vec->data[0];
-    float min = vec->data[0];
-    for (size_t i = 1; i < vec->len; i++) {
-        if (vec->data[i] < min) min = vec->data[i];
+
+    float min_val = FLT_MAX;
+
+#if defined(__AVX__)
+    __m256 vmin = _mm256_set1_ps(min_val);
+    size_t i = 0;
+
+    for (; i + 7 < vec->len; i += 8) {
+        __m256 v = _mm256_loadu_ps(&vec->data[i]);
+        vmin = _mm256_min_ps(vmin, v);
     }
-    return min;
+
+    __m128 low = _mm256_castps256_ps128(vmin);
+    __m128 high = _mm256_extractf128_ps(vmin, 1);
+    __m128 min128 = _mm_min_ps(low, high);
+    min128 = _mm_min_ps(min128, _mm_movehl_ps(min128, min128));
+    min128 = _mm_min_ps(min128, _mm_shuffle_ps(min128, min128, 0x1));
+    min_val = _mm_cvtss_f32(min128);
+
+    for (; i < vec->len; ++i)
+        if (vec->data[i] < min_val)
+            min_val = vec->data[i];
+
+#elif defined(__SSE__)
+    __m128 vmin = _mm_set1_ps(min_val);
+    size_t i = 0;
+
+    for (; i + 3 < vec->len; i += 4) {
+        __m128 v = _mm_loadu_ps(&vec->data[i]);
+        vmin = _mm_min_ps(vmin, v);
+    }
+
+    vmin = _mm_min_ps(vmin, _mm_movehl_ps(vmin, vmin));
+    vmin = _mm_min_ps(vmin, _mm_shuffle_ps(vmin, vmin, 0x1));
+    min_val = _mm_cvtss_f32(vmin);
+
+    for (; i < vec->len; ++i)
+        if (vec->data[i] < min_val)
+            min_val = vec->data[i];
+
+#else
+    for (size_t i = 0; i < vec->len; ++i)
+        if (vec->data[i] < min_val)
+            min_val = vec->data[i];
+#endif
+
+    return min_val;
 }
+// ------------------------------------------------------------------------------------------ 
+
+
+// float min_float_vector(float_v* vec) {
+//     if (!vec || !vec->data || vec->len == 0) {
+//         errno = EINVAL;
+//         return FLT_MAX;
+//     }
+//     if (vec->len == 1) return vec->data[0];
+//     float min = vec->data[0];
+//     for (size_t i = 1; i < vec->len; i++) {
+//         if (vec->data[i] < min) min = vec->data[i];
+//     }
+//     return min;
+// }
 // -------------------------------------------------------------------------------- 
 
 float max_float_vector(float_v* vec) {
@@ -593,13 +650,67 @@ float max_float_vector(float_v* vec) {
         errno = EINVAL;
         return FLT_MAX;
     }
-    if (vec->len == 1) return vec->data[0];
-    float max = vec->data[0];  // Changed variable name
-    for (size_t i = 1; i < vec->len; i++) {
-        if (vec->data[i] > max) max = vec->data[i];  // Changed comparison and variable
+
+    float max_val = -FLT_MAX;
+
+#if defined(__AVX__)
+    __m256 vmax = _mm256_set1_ps(max_val);
+    size_t i = 0;
+
+    for (; i + 7 < vec->len; i += 8) {
+        __m256 v = _mm256_loadu_ps(&vec->data[i]);
+        vmax = _mm256_max_ps(vmax, v);
     }
-    return max;  // Return max instead of min
+
+    __m128 low = _mm256_castps256_ps128(vmax);
+    __m128 high = _mm256_extractf128_ps(vmax, 1);
+    __m128 max128 = _mm_max_ps(low, high);
+    max128 = _mm_max_ps(max128, _mm_movehl_ps(max128, max128));
+    max128 = _mm_max_ps(max128, _mm_shuffle_ps(max128, max128, 0x1));
+    max_val = _mm_cvtss_f32(max128);
+
+    for (; i < vec->len; ++i)
+        if (vec->data[i] > max_val)
+            max_val = vec->data[i];
+
+#elif defined(__SSE__)
+    __m128 vmax = _mm_set1_ps(max_val);
+    size_t i = 0;
+
+    for (; i + 3 < vec->len; i += 4) {
+        __m128 v = _mm_loadu_ps(&vec->data[i]);
+        vmax = _mm_max_ps(vmax, v);
+    }
+
+    vmax = _mm_max_ps(vmax, _mm_movehl_ps(vmax, vmax));
+    vmax = _mm_max_ps(vmax, _mm_shuffle_ps(vmax, vmax, 0x1));
+    max_val = _mm_cvtss_f32(vmax);
+
+    for (; i < vec->len; ++i)
+        if (vec->data[i] > max_val)
+            max_val = vec->data[i];
+
+#else
+    for (size_t i = 0; i < vec->len; ++i)
+        if (vec->data[i] > max_val)
+            max_val = vec->data[i];
+#endif
+
+    return max_val;
 }
+
+// float max_float_vector(float_v* vec) {
+//     if (!vec || !vec->data || vec->len == 0) {
+//         errno = EINVAL;
+//         return FLT_MAX;
+//     }
+//     if (vec->len == 1) return vec->data[0];
+//     float max = vec->data[0];  // Changed variable name
+//     for (size_t i = 1; i < vec->len; i++) {
+//         if (vec->data[i] > max) max = vec->data[i];  // Changed comparison and variable
+//     }
+//     return max;  // Return max instead of min
+// }
 // -------------------------------------------------------------------------------- 
 
 float sum_float_vector(float_v* vec) {
@@ -607,18 +718,63 @@ float sum_float_vector(float_v* vec) {
         errno = EINVAL;
         return FLT_MAX;
     }
-    
-    float sum = 0;
-    for (size_t i = 0; i < vec->len; i++) {
-        // Check for NaN
-        if (isnan(vec->data[i])) {
-            errno = EINVAL;
-            return FLT_MAX;
-        }
-        sum += vec->data[i];
+
+    const size_t len = vec->len;
+    const float* data = vec->data;
+
+    float sum = 0.0f;
+
+#if defined(__AVX__)
+    __m256 vsum = _mm256_setzero_ps();
+    size_t i = 0;
+
+    for (; i + 7 < len; i += 8) {
+        __m256 chunk = _mm256_loadu_ps(&data[i]);
+        vsum = _mm256_add_ps(vsum, chunk);
     }
+
+    // Horizontal sum of vsum
+    __m128 low  = _mm256_castps256_ps128(vsum);         // lower 128
+    __m128 high = _mm256_extractf128_ps(vsum, 1);       // upper 128
+    __m128 sum128 = _mm_add_ps(low, high);              // add lower + upper
+
+    // Shuffle and reduce
+    sum128 = _mm_hadd_ps(sum128, sum128);
+    sum128 = _mm_hadd_ps(sum128, sum128);
+    sum += _mm_cvtss_f32(sum128);
+
+    // Handle remaining elements
+    for (; i < len; ++i) {
+        sum += data[i];
+    }
+
+#elif defined(__SSE__)
+    __m128 vsum = _mm_setzero_ps();
+    size_t i = 0;
+
+    for (; i + 3 < len; i += 4) {
+        __m128 chunk = _mm_loadu_ps(&data[i]);
+        vsum = _mm_add_ps(vsum, chunk);
+    }
+
+    vsum = _mm_hadd_ps(vsum, vsum);
+    vsum = _mm_hadd_ps(vsum, vsum);
+    sum += _mm_cvtss_f32(vsum);
+
+    for (; i < len; ++i) {
+        sum += data[i];
+    }
+
+#else
+    // Fallback to scalar
+    for (size_t i = 0; i < len; ++i) {
+        sum += data[i];
+    }
+#endif
+
     return sum;
 }
+
 // -------------------------------------------------------------------------------- 
 
 float average_float_vector(float_v* vec) {
@@ -626,45 +782,146 @@ float average_float_vector(float_v* vec) {
         errno = EINVAL;
         return FLT_MAX;
     }
-    errno = 0; 
+
     float sum = sum_float_vector(vec);
-    if (errno != 0) {
-        return FLT_MAX;
-    }
-    
+    if (errno != 0) return FLT_MAX;
     return sum / vec->len;
 }
+
+
+// float average_float_vector(float_v* vec) {
+//     if (!vec || !vec->data || vec->len == 0) {
+//         errno = EINVAL;
+//         return FLT_MAX;
+//     }
+//     errno = 0; 
+//     float sum = sum_float_vector(vec);
+//     if (errno != 0) {
+//         return FLT_MAX;
+//     }
+//     
+//     return sum / vec->len;
+// }
 // -------------------------------------------------------------------------------- 
 
 float stdev_float_vector(float_v* vec) {
-    if (!vec || !vec->data || vec->len == 0) {
-        errno = EINVAL;
+    if (!vec || !vec->data) {
+        errno = ENODATA;
         return FLT_MAX;
     }
+
+    if (vec->len == 0) {
+        errno = ENODATA;
+        return FLT_MAX;
+    }
+
     if (vec->len == 1) {
         errno = ENODATA;
         return FLT_MAX;
     }
-    
-    float avg = average_float_vector(vec);
-    if (errno != 0) {
-        return FLT_MAX;
-    }
-    
-    float sum_sq_diff = 0;
-    for (size_t i = 0; i < vec->len; i++) {
-        float diff = vec->data[i] - avg;
-        float sq_diff = diff * diff;
-        if (isinf(sq_diff)) {
-            errno = ERANGE;
-            return FLT_MAX;
+
+    float mean = average_float_vector(vec);
+    if (errno != 0) return FLT_MAX;
+
+    float sum_sq_diff = 0.0f;
+
+#if defined(__AVX__)
+    __m256 vmean = _mm256_set1_ps(mean);
+    __m256 vsum = _mm256_setzero_ps();
+    size_t i = 0;
+
+    for (; i + 7 < vec->len; i += 8) {
+        __m256 v = _mm256_loadu_ps(&vec->data[i]);
+        __m256 diff = _mm256_sub_ps(v, vmean);
+        __m256 sq = _mm256_mul_ps(diff, diff);
+        if (!_mm256_testz_ps(sq, sq)) { // Skip all-zero check — we need isinf
+            for (int j = 0; j < 8; ++j) {
+                float x = vec->data[i + j];
+                if (isinf(x)) return INFINITY;
+            }
         }
-        if (isinf(vec->data[i])) return INFINITY;
-        sum_sq_diff += sq_diff;
+        vsum = _mm256_add_ps(vsum, sq);
     }
-    
-    return sqrt(sum_sq_diff / vec->len);  // or (vec->len - 1) for sample
+
+    __m128 low = _mm256_castps256_ps128(vsum);
+    __m128 high = _mm256_extractf128_ps(vsum, 1);
+    __m128 sum128 = _mm_add_ps(low, high);
+    sum128 = _mm_hadd_ps(sum128, sum128);
+    sum128 = _mm_hadd_ps(sum128, sum128);
+    sum_sq_diff += _mm_cvtss_f32(sum128);
+
+    for (; i < vec->len; ++i) {
+        float diff = vec->data[i] - mean;
+        float sq = diff * diff;
+        if (isinf(vec->data[i])) return INFINITY;
+        sum_sq_diff += sq;
+    }
+
+#elif defined(__SSE__)
+    __m128 vmean = _mm_set1_ps(mean);
+    __m128 vsum = _mm_setzero_ps();
+    size_t i = 0;
+
+    for (; i + 3 < vec->len; i += 4) {
+        __m128 v = _mm_loadu_ps(&vec->data[i]);
+        __m128 diff = _mm_sub_ps(v, vmean);
+        __m128 sq = _mm_mul_ps(diff, diff);
+        for (int j = 0; j < 4; ++j) {
+            if (isinf(vec->data[i + j])) return INFINITY;
+        }
+        vsum = _mm_add_ps(vsum, sq);
+    }
+
+    vsum = _mm_hadd_ps(vsum, vsum);
+    vsum = _mm_hadd_ps(vsum, vsum);
+    sum_sq_diff += _mm_cvtss_f32(vsum);
+
+    for (; i < vec->len; ++i) {
+        if (isinf(vec->data[i])) return INFINITY;
+        float diff = vec->data[i] - mean;
+        sum_sq_diff += diff * diff;
+    }
+
+#else
+    for (size_t i = 0; i < vec->len; ++i) {
+        if (isinf(vec->data[i])) return INFINITY;
+        float diff = vec->data[i] - mean;
+        sum_sq_diff += diff * diff;
+    }
+#endif
+
+    return sqrtf(sum_sq_diff / vec->len);
 }
+
+// float stdev_float_vector(float_v* vec) {
+//     if (!vec || !vec->data || vec->len == 0) {
+//         errno = EINVAL;
+//         return FLT_MAX;
+//     }
+//     if (vec->len == 1) {
+//         errno = ENODATA;
+//         return FLT_MAX;
+//     }
+//     
+//     float avg = average_float_vector(vec);
+//     if (errno != 0) {
+//         return FLT_MAX;
+//     }
+//     
+//     float sum_sq_diff = 0;
+//     for (size_t i = 0; i < vec->len; i++) {
+//         float diff = vec->data[i] - avg;
+//         float sq_diff = diff * diff;
+//         if (isinf(sq_diff)) {
+//             errno = ERANGE;
+//             return FLT_MAX;
+//         }
+//         if (isinf(vec->data[i])) return INFINITY;
+//         sum_sq_diff += sq_diff;
+//     }
+//     
+//     return sqrt(sum_sq_diff / vec->len);  // or (vec->len - 1) for sample
+// }
 // -------------------------------------------------------------------------------- 
 
 float_v* cum_sum_float_vector(float_v* vec) {
@@ -672,37 +929,61 @@ float_v* cum_sum_float_vector(float_v* vec) {
         errno = EINVAL;
         return NULL;
     }
-    
-    float_v* new_vec = init_float_vector(vec->len);
-    if (new_vec == NULL) {
+
+    float_v* result = init_float_vector(vec->len);
+    if (!result) {
         errno = ENOMEM;
         return NULL;
     }
-    
-    float sum = 0;
-    for (size_t i = 0; i < vec->len; i++) {
-        if (isnan(vec->data[i])) {
-            errno = EINVAL;
-            free_float_vector(new_vec);
+
+    float sum = 0.0f;
+    for (size_t i = 0; i < vec->len; ++i) {
+        sum += vec->data[i];
+        if (!push_back_float_vector(result, sum)) {
+            free_float_vector(result);
             return NULL;
-        }
-        
-        float new_sum = sum + vec->data[i];
-        if (isinf(new_sum) && !isinf(sum) && !isinf(vec->data[i])) {
-            errno = ERANGE;
-            free_float_vector(new_vec);
-            return NULL;
-        }
-        
-        sum = new_sum;
-        if (!push_back_float_vector(new_vec, sum)) {
-            free_float_vector(new_vec);
-            return NULL;  // errno already set by push_back
         }
     }
-    
-    return new_vec;
+
+    return result;
 }
+
+// float_v* cum_sum_float_vector(float_v* vec) {
+//     if (!vec || !vec->data || vec->len == 0) {
+//         errno = EINVAL;
+//         return NULL;
+//     }
+//     
+//     float_v* new_vec = init_float_vector(vec->len);
+//     if (new_vec == NULL) {
+//         errno = ENOMEM;
+//         return NULL;
+//     }
+//     
+//     float sum = 0;
+//     for (size_t i = 0; i < vec->len; i++) {
+//         if (isnan(vec->data[i])) {
+//             errno = EINVAL;
+//             free_float_vector(new_vec);
+//             return NULL;
+//         }
+//         
+//         float new_sum = sum + vec->data[i];
+//         if (isinf(new_sum) && !isinf(sum) && !isinf(vec->data[i])) {
+//             errno = ERANGE;
+//             free_float_vector(new_vec);
+//             return NULL;
+//         }
+//         
+//         sum = new_sum;
+//         if (!push_back_float_vector(new_vec, sum)) {
+//             free_float_vector(new_vec);
+//             return NULL;  // errno already set by push_back
+//         }
+//     }
+//     
+//     return new_vec;
+// }
 // ================================================================================
 // ================================================================================
 // DICTIONARY IMPLEMENTATION
