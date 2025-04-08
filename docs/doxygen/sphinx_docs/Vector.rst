@@ -1509,6 +1509,15 @@ Min and Max Values
 The following functions can be used to find the maximum and minimum values 
 in a dynamically allocated vector or a statically allocated array.
 
+Internally optimized using SIMD (Single Instruction, Multiple Data) instructions 
+such as AVX or SSE where supported, enabling high-performance parallel summation
+of float values. Falls back to scalar implementation on platforms where SIMD is 
+not available.
+
+.. note:: 
+
+   If compiled with `-march=native`, `-mavx`, or `-msse`, this function will use hardware-accelerated AVX or SSE instructions for fast processing of float arrays.
+
 min_float_vector
 ~~~~~~~~~~~~~~~~
 .. c:function:: float min_float_vector(float_v* vec)
@@ -1632,9 +1641,18 @@ sum_float_vector
    Calculates the sum of all elements in a float vector. Works with both dynamic
    vectors and static arrays.
 
+   Internally optimized using SIMD (Single Instruction, Multiple Data) instructions 
+   such as AVX or SSE where supported, enabling high-performance parallel summation
+   of float values. Falls back to scalar implementation on platforms where SIMD is 
+   not available.
+
    :param vec: Target float vector
    :returns: Sum of all elements, or FLT_MAX on error
    :raises: Sets errno to EINVAL for NULL input, empty vector, or NaN values
+
+   .. note:: 
+
+      If compiled with `-march=native`, `-mavx`, or `-msse`, this function will use hardware-accelerated AVX or SSE instructions for fast processing of float arrays. 
 
    Example:
 
@@ -1666,9 +1684,18 @@ average_float_vector
    Calculates the arithmetic mean (average) of all elements in a float vector.
    Works with both dynamic vectors and static arrays.
 
+   Internally optimized using SIMD (Single Instruction, Multiple Data) instructions 
+   such as AVX or SSE where supported, enabling high-performance parallel summation
+   of float values. Falls back to scalar implementation on platforms where SIMD is 
+   not available.
+
    :param vec: Target float vector
    :returns: Average of all elements, or FLT_MAX on error
    :raises: Sets errno to EINVAL for NULL input, empty vector, or NaN values
+
+   .. note:: 
+
+      If compiled with `-march=native`, `-mavx`, or `-msse`, this function will use hardware-accelerated AVX or SSE instructions for fast processing of float arrays.
 
    Example:
 
@@ -1746,9 +1773,18 @@ stdev_float_vector
    Calculates the population standard deviation of elements in a float vector.
    Works with both dynamic vectors and static arrays.
 
+   Internally optimized using SIMD (Single Instruction, Multiple Data) instructions 
+   such as AVX or SSE where supported, enabling high-performance parallel summation
+   of float values. Falls back to scalar implementation on platforms where SIMD is 
+   not available.
+
    :param vec: Target float vector
    :returns: Standard deviation of elements, or FLT_MAX on error
    :raises: Sets errno to EINVAL for NULL input or empty vector
+
+   .. note:: 
+
+      If compiled with `-march=native`, `-mavx`, or `-msse`, this function will use hardware-accelerated AVX or SSE instructions for fast processing of float arrays.
 
    Example with dynamic vector:
 
@@ -1789,9 +1825,18 @@ cum_sum_float_vector
    Each element in the output vector is the sum of all elements up to and including
    that position in the input vector. Works with both dynamic vectors and static arrays.
 
+   Internally optimized using SIMD (Single Instruction, Multiple Data) instructions 
+   such as AVX or SSE where supported, enabling high-performance parallel summation
+   of float values. Falls back to scalar implementation on platforms where SIMD is 
+   not available.
+
    :param vec: Target float vector
    :returns: New vector containing cumulative sums, or NULL on error
    :raises: Sets errno to EINVAL for NULL input or empty vector, ENODATA for failed push operations
+
+   .. note:: 
+
+      If compiled with `-march=native`, `-mavx`, or `-msse`, this function will use hardware-accelerated AVX or SSE instructions for fast processing of float arrays.
 
    Example with dynamic vector:
 
