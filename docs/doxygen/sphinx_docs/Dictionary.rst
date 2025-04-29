@@ -411,6 +411,211 @@ float_dict_hash_size
        Buckets containing items: 2
        Total key-value pairs: 2
 
+merge_float_dict
+~~~~~~~~~~~~~~~~
+.. c:function:: dict_f* merge_float_dict(const dict_f* dict1, const dict_f* dict2, bool overwrite)
+
+   Merges two dictionaries into a new dictionary. The resulting dictionary contains all 
+   entries from both input dictionaries. If a key exists in both dictionaries:
+
+   - If ``overwrite`` is ``true``, the value from ``dict2`` replaces the value from ``dict1``.
+   - If ``overwrite`` is ``false``, the original value from ``dict1`` is preserved.
+
+   Neither ``dict1`` nor ``dict2`` is modified by this operation.
+
+   :param dict1: First input dictionary
+   :param dict2: Second input dictionary
+   :param overwrite: If true, dict2 values overwrite dict1 values on key conflicts
+   :returns: New dictionary containing merged entries, or NULL on failure
+   :raises: Sets errno to EINVAL for NULL inputs, or propagates errors from underlying operations
+
+   Example:
+
+   .. code-block:: c
+
+      dict_f* dict1 FDICT_GBC = init_float_dict();
+      dict_f* dict2 FDICT_GBC = init_float_dict();
+      
+      insert_float_dict(dict1, "temperature", 25.0f);
+      insert_float_dict(dict1, "humidity", 40.0f);
+
+      insert_float_dict(dict2, "humidity", 45.0f);  // Key conflict
+      insert_float_dict(dict2, "pressure", 1012.5f);
+
+      // Merge with overwrite
+      dict_f* merged FDICT_GBC = merge_float_dict(dict1, dict2, true);
+
+      printf("Merged Dictionary:\n");
+      foreach_float_dict(merged, print_entry, NULL);
+
+   Example output::
+
+      Merged Dictionary:
+      temperature: 25.00
+      humidity: 45.00
+      pressure: 1012.50
+
+   Example without overwrite:
+
+   .. code-block:: c
+
+      dict_f* merged_no_overwrite FDICT_GBC = merge_float_dict(dict1, dict2, false);
+
+      printf("Merged Dictionary (no overwrite):\n");
+      foreach_float_dict(merged_no_overwrite, print_entry, NULL);
+
+   Example output::
+
+      Merged Dictionary (no overwrite):
+      temperature: 25.00
+      humidity: 40.00
+      pressure: 1012.50
+
+   Notes:
+
+   - The caller is responsible for freeing the returned merged dictionary.
+   - If memory allocation fails at any point, NULL is returned and errno is set appropriately.
+
+clear_float_dict
+~~~~~~~~~~~~~~~~
+.. c:function:: bool clear_float_dict(dict_f* dict)
+
+   Removes all key-value pairs from the dictionary without freeing the dictionary itself.
+   After calling this function, the dictionary remains allocated and can be reused
+   without reinitialization.
+
+   :param dict: Target dictionary to clear
+   :returns: true if all entries were cleared successfully, false otherwise
+   :raises: Sets errno to EINVAL for NULL input
+
+   Example:
+
+   .. code-block:: c
+
+      dict_f* dict FDICT_GBC = init_float_dict();
+      
+      insert_float_dict(dict, "temperature", 23.5f);
+      insert_float_dict(dict, "pressure", 1013.2f);
+
+      printf("Before clearing:\n");
+      printf("  Total key-value pairs: %zu\n", float_dict_hash_size(dict));
+      
+      clear_float_dict(dict);
+
+      printf("After clearing:\n");
+      printf("  Total key-value pairs: %zu\n", float_dict_hash_size(dict));
+
+   Output::
+
+      Before clearing:
+        Total key-value pairs: 2
+      After clearing:
+        Total key-value pairs: 0
+
+   Notes:
+
+   - The dictionary structure and its internal hash table remain allocated after clearing.
+   - This function is useful when reusing an existing dictionary without reallocating it.
+
+copy_float_dict
+~~~~~~~~~~~~~~~
+.. c:function:: dict_f* copy_float_dict(const dict_f* dict)
+
+   Creates a deep copy of a dictionary, duplicating all key-value pairs into a new dictionary.
+   Changes made to the copied dictionary do not affect the original.
+
+   :param dict: Target dictionary to copy
+   :returns: Pointer to new dictionary containing copies of all entries, or NULL on error
+   :raises: Sets errno to EINVAL for NULL input, or ENOMEM for allocation failure
+
+   Example:
+
+   .. code-block:: c
+
+      dict_f* original FDICT_GBC = init_float_dict();
+      insert_float_dict(original, "sensor1", 10.5f);
+      insert_float_dict(original, "sensor2", 12.3f);
+
+      dict_f* duplicate FDICT_GBC = copy_float_dict(original);
+
+      printf("Original Dictionary:\n");
+      foreach_float_dict(original, print_entry, NULL);
+
+      printf("\nCopied Dictionary:\n");
+      foreach_float_dict(duplicate, print_entry, NULL);
+
+      // Modify original
+      update_float_dict(original, "sensor1", 99.9f);
+
+      printf("\nAfter modifying original:\n");
+      printf("Original Dictionary:\n");
+      foreach_float_dict(original, print_entry, NULL);
+      printf("Copied Dictionary (unchanged):\n");
+      foreach_float_dict(duplicate, print_entry, NULL);
+
+   Output::
+
+      Original Dictionary:
+      sensor1: 10.50
+      sensor2: 12.30
+
+      Copied Dictionary:
+      sensor1: 10.50
+      sensor2: 12.30
+
+      After modifying original:
+      Original Dictionary:
+      sensor1: 99.90
+      sensor2: 12.30
+      Copied Dictionary (unchanged):
+      sensor1: 10.50
+      sensor2: 12.30
+
+   Notes:
+
+   - The caller is responsible for freeing the copied dictionary using `free_float_dict`.
+   - Copying a NULL dictionary returns NULL and sets errno to EINVAL.
+
+has_key_float_dict
+~~~~~~~~~~~~~~~~~~
+.. c:function:: bool has_key_float_dict(const dict_f* dict, const char* key)
+
+   Checks if a specified key exists in the dictionary without retrieving its value.
+
+   :param dict: Target dictionary to search
+   :param key: String key to look for
+   :returns: true if key exists, false otherwise
+   :raises: Sets errno to EINVAL for NULL input
+
+   Example:
+
+   .. code-block:: c
+
+      dict_f* dict FDICT_GBC = init_float_dict();
+      insert_float_dict(dict, "temperature", 23.5f);
+      insert_float_dict(dict, "pressure", 1012.8f);
+
+      if (has_key_float_dict(dict, "temperature")) {
+          printf("'temperature' exists in the dictionary\n");
+      } else {
+          printf("'temperature' not found\n");
+      }
+
+      if (!has_key_float_dict(dict, "humidity")) {
+          printf("'humidity' not found in the dictionary\n");
+      }
+
+   Output::
+
+      'temperature' exists in the dictionary
+      'humidity' not found in the dictionary
+
+   Notes:
+
+   - This function does not modify the dictionary.
+   - Useful for checking the presence of a key before inserting or updating.
+
+
 Iterator Support
 ----------------
 

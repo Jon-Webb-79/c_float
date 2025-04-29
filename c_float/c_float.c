@@ -1275,6 +1275,24 @@ size_t float_dict_hash_size(const dict_f* dict) {
 }
 // -------------------------------------------------------------------------------- 
 
+bool has_key_float_dict(const dict_f* dict, const char* key) {
+    if (!dict || !key) {
+        errno = EINVAL;
+        return false;
+    }
+
+    size_t index = hash_function(key, HASH_SEED) % dict->alloc;
+
+    for (const fdictNode* current = dict->keyValues[index].next; current; current = current->next) {
+        if (strcmp(current->key, key) == 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+// -------------------------------------------------------------------------------- 
+
 dict_f* copy_float_dict(const dict_f* dict) {
     if (!dict) {
         errno = EINVAL;
