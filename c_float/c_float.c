@@ -1474,5 +1474,269 @@ bool foreach_float_dict(const dict_f* dict, dict_iterator iter, void* user_data)
     return true;
 }
 // ================================================================================ 
+// ================================================================================
+
+typedef struct fvdictNode {
+    char* key;
+    float_v* value;
+    struct fvdictNode* next;
+} fvdictNode;
+// --------------------------------------------------------------------------------
+
+struct dict_fv {
+    fvdictNode* keyValues;
+    size_t hash_size;
+    size_t len;
+    size_t alloc;
+};
+// --------------------------------------------------------------------------------
+
+dict_fv* init_floatv_dict(void) {
+    // Allocate the dictionary structure
+    dict_fv* dict = calloc(1, sizeof(dict_f));
+    if (!dict) {
+        errno = ENOMEM;
+        fprintf(stderr, "Failed to allocate vector dictionary structure\n");
+        return NULL;
+    }
+
+    // Allocate initial hash table array
+    dict->keyValues = calloc(hashSize, sizeof(fvdictNode));
+    if (!dict->keyValues) {
+        errno = ENOMEM;
+        fprintf(stderr, "Failed to allocate hash table array\n");
+        free(dict);
+        return NULL;
+    }
+
+    // Initialize dictionary metadata
+    dict->hash_size = 0;   // No items yet
+    dict->len = 0;         // No occupied buckets
+    dict->alloc = hashSize;
+
+    return dict;
+}
+// -------------------------------------------------------------------------------- 
+
+static bool resize_dictv(dict_fv* dict, size_t new_size) {
+    // Input validation
+    if (!dict || new_size < dict->hash_size || new_size == 0) {
+        errno = EINVAL;
+        return false;
+    }
+
+    // Ensure new_size is a power of 2 for better hash distribution
+    new_size = (size_t)pow(2, ceil(log2(new_size)));
+
+    // Use calloc for automatic zero initialization
+    fvdictNode* new_table = calloc(new_size, sizeof(fvdictNode));
+    if (!new_table) {
+        errno = ENOMEM;
+        return false;
+    }
+
+    // Keep track of old table for cleanup if something fails
+    fvdictNode* old_table = dict->keyValues;
+    const size_t old_size = dict->alloc;
+    size_t rehashed_count = 0;
+
+    // Rehash all existing entries into the new table
+    for (size_t i = 0; i < old_size; ++i) {
+        fvdictNode* current = old_table[i].next;
+        while (current) {
+            fvdictNode* next = current->next;
+
+            size_t new_index = hash_function(current->key, HASH_SEED) % new_size;
+
+            // Reinsert into the new hash bucket (head insertion)
+            current->next = new_table[new_index].next;
+            new_table[new_index].next = current;
+
+            rehashed_count++;
+            current = next;
+        }
+    }
+
+    // Validate rehash count matches the number of entries
+    if (rehashed_count != dict->hash_size) {
+        // Rollback: disconnect moved nodes so they aren't double-freed
+        for (size_t i = 0; i < new_size; ++i) {
+            fvdictNode* current = new_table[i].next;
+            while (current) {
+                fvdictNode* next = current->next;
+                current->next = NULL;
+                current = next;
+            }
+        }
+        free(new_table);
+        errno = EAGAIN;
+        return false;
+    }
+
+    // Replace table on success
+    dict->keyValues = new_table;
+    dict->alloc = new_size;
+
+    // Free old hash bucket array (nodes were moved, not freed)
+    free(old_table);
+
+    return true;
+}
+// --------------------------------------------------------------------------------
+
+bool create_floatv_dict(dict_fv* dict, char* key, size_t size) {
+    if (!dict || !key) {
+        errno = EINVAL;
+        return false;
+    }
+
+    // Resize if load factor exceeded
+    if (dict->hash_size >= dict->alloc * LOAD_FACTOR_THRESHOLD) {
+        size_t new_size = (dict->alloc < VEC_THRESHOLD)
+                          ? dict->alloc * 2
+                          : dict->alloc + VEC_FIXED_AMOUNT;
+
+        if (!resize_dictv(dict, new_size)) {
+            return false;
+        }
+    }
+
+    const size_t index = hash_function(key, HASH_SEED) % dict->alloc;
+
+    // Check for key collision
+    for (fvdictNode* current = dict->keyValues[index].next; current; current = current->next) {
+        if (strcmp(current->key, key) == 0) {
+            errno = EEXIST;
+            return false;
+        }
+    }
+
+    char* new_key = strdup(key);
+    if (!new_key) {
+        errno = ENOMEM;
+        return false;
+    }
+
+    fvdictNode* new_node = malloc(sizeof(fvdictNode));
+    if (!new_node) {
+        free(new_key);
+        errno = ENOMEM;
+        return false;
+    }
+
+    float_v* value = NULL;
+    value = init_float_vector(size);
+    if (!value) {
+        free(new_key);
+        free(new_node);
+        errno = ENOMEM;
+        return false;
+    }
+
+    new_node->key = new_key;
+    new_node->value = value;
+    new_node->next = dict->keyValues[index].next;
+    dict->keyValues[index].next = new_node;
+
+    dict->hash_size++;
+    if (new_node->next == NULL) {
+        dict->len++;
+    }
+
+    return true;
+}
+// --------------------------------------------------------------------------------
+
+bool pop_floatv_dict(dict_fv* dict, const char* key) {
+    if (!dict || !key) {
+        errno = EINVAL;
+        return false;
+    }
+
+    size_t index = hash_function(key, HASH_SEED) % dict->alloc;
+    
+    fvdictNode* prev = &dict->keyValues[index];
+    fvdictNode* current = prev->next;
+    
+    while (current) {
+        if (strcmp(current->key, key) == 0) {
+            prev->next = current->next;
+            
+            // Update dictionary metadata
+            dict->hash_size--;
+            if (!prev->next) {  // If bucket is now empty
+                dict->len--;
+            }
+            
+            // Clean up node memory
+            free(current->key);
+            if (current->value->alloc_type == STATIC)
+                free(current->value);
+            else 
+                free_float_vector(current->value);
+            free(current);
+            
+            return true;
+        }
+        prev = current;
+        current = current->next;
+    }
+
+    errno = ENOENT;  // Set errno when key not found
+    return false;
+}
+// -------------------------------------------------------------------------------- 
+
+float_v* return_floatv_pointer(dict_fv* dict, const char* key) {
+    if (!dict || !key) {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    size_t index = hash_function(key, HASH_SEED) % dict->alloc;
+    
+    for (const fvdictNode* current = dict->keyValues[index].next; current; current = current->next) {
+        if (strcmp(current->key, key) == 0) {
+            return current->value;
+        }
+    }
+
+    errno = ENOENT;  // Set errno when key not found
+    return NULL;
+}
+// -------------------------------------------------------------------------------- 
+
+void free_floatv_dict(dict_fv* dict) {
+    if (!dict) {
+        return;  // Silent return on NULL - common pattern for free functions
+    }
+
+    // Free all nodes in each bucket
+    for (size_t i = 0; i < dict->alloc; i++) {
+        fvdictNode* current = dict->keyValues[i].next;
+        while (current) {      
+            fvdictNode* next = current->next;
+
+            free_float_vector(current->value);
+            free(current->key);
+            free(current);
+
+            current = next;
+        }
+    }
+
+    // Free the hash table and dictionary struct
+    free(dict->keyValues);
+    free(dict);
+}
+// -------------------------------------------------------------------------------- 
+
+void _free_floatv_dict(dict_fv** dict_ptr) {
+    if (dict_ptr && *dict_ptr) {
+        free_floatv_dict(*dict_ptr);
+        *dict_ptr = NULL;  // Prevent use-after-free
+    }
+}
+// ================================================================================ 
 // ================================================================================ 
 // eof

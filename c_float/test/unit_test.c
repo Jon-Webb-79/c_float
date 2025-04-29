@@ -13,7 +13,7 @@
 // ================================================================================
 // Include modules here
 
-#include <stdio.h>
+//#include <stdio.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <setjmp.h>
@@ -129,6 +129,9 @@ const struct CMUnitTest test_dict[] = {
     cmocka_unit_test_setup_teardown(test_foreach_float_dict_basic, setup, teardown),
     cmocka_unit_test_setup_teardown(test_foreach_float_dict_empty, setup, teardown),
     cmocka_unit_test_setup_teardown(test_foreach_float_dict_null, setup, teardown),
+    cmocka_unit_test(test_vector_dictionary),
+    cmocka_unit_test(test_vector_dictionary_resize),
+    cmocka_unit_test(test_vector_dictionary_gbc)
 };
 // ================================================================================ 
 // ================================================================================ 

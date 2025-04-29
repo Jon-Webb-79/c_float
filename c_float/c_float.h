@@ -84,10 +84,10 @@ typedef struct {
 *         Sets errno to ENOMEM if memory allocation fails
 */
 float_v* init_float_vector(size_t buffer);
-// --------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------- 
 
 /**
- * @macro FLOAT_ARRAY
+ * @function init_float_static_array
  * @brief Creates a stack-based float vector with static array
  *
  * @param size Size of the array
@@ -651,6 +651,92 @@ bool foreach_float_dict(const dict_f* dict, dict_iterator iter, void* user_data)
 #define f_alloc(f_struct) _Generic((f_struct), \
     float_v*: float_vector_alloc, \
     dict_f*: float_dict_alloc) (f_struct)
+// ================================================================================ 
+// ================================================================================
+// VECTOR DICTIONARY PROTOTYPES 
+
+/**
+ * @typedef dict_fv
+ * @brief Opaque struct representing a dictionary for vector data types.
+ *
+ * This structure encapsulates a hash table that maps string keys to a vector of float values.
+ * The details of the struct are hidden from the user and managed internally.
+ */
+typedef struct dict_fv dict_fv;
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @brief Creates a dictionary of float vectors
+ *
+ * @returns a dictionary of float vectors
+ */
+dict_fv* init_floatv_dict(void);
+// -------------------------------------------------------------------------------- 
+
+/**
+* @function create_floatv_dict
+* @brief Creates a key vector/array pair 
+*
+* @param dict A fict_fv data type
+* @param key a string literal key
+* @param size The size of the array or vector 
+* @return true if the function executes succesfully, false otherwise
+*/
+bool create_floatv_dict(dict_fv* dict, char* key, size_t size);
+// -------------------------------------------------------------------------------- 
+
+/**
+* @function pop_floatv_dict 
+* @brief Removes a statically or dynamically allocated array from the dictionary
+*
+* @param dict A fict_fv data type
+* @param key a string literal key
+* @return true if the function executes succesfully, false otherwise
+*/
+bool pop_floatv_dict(dict_fv* dict, const char* key);
+// -------------------------------------------------------------------------------- 
+
+/**
+* @function pop_floatv_dict 
+* @brief Returns a float_v pointer for use in vector and array functions
+*
+* @param dict A fict_fv data type
+* @param key a string literal key
+* @return a float_v pointer so it can be used in vector and array functions
+*/
+float_v* return_floatv_pointer(dict_fv* dict, const char* key);
+// -------------------------------------------------------------------------------- 
+
+/**
+* @function free_floatv_dict 
+* @brief Returns a float_v pointer for use in vector and array functions
+*
+* @param dict A fict_fv data type
+*/
+void free_floatv_dict(dict_fv* dict);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @brief Safely frees a vector dictionary and sets the pointer to NULL.
+ *
+ * A wrapper around `free_dict` that ensures the dictionary pointer is also set to NULL
+ * after being freed. Useful for preventing dangling pointers.
+ *
+ * @param dict Pointer to the dictionary pointer to free.
+ */
+void _free_floatv_dict(dict_fv** dict);
+// --------------------------------------------------------------------------------
+
+#if defined(__GNUC__) || defined (__clang__)
+    /**
+     * @macro DICTV_GBC
+     * @brief A macro for enabling automatic cleanup of dict_fv objects.
+     *
+     * This macro uses the cleanup attribute to automatically call `_free_vector`
+     * when the scope ends, ensuring proper memory management.
+     */
+    #define FDICTV_GBC __attribute__((cleanup(_free_floatv_dict)))
+#endif
 // ================================================================================ 
 // ================================================================================ 
 #ifdef __cplusplus

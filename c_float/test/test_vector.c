@@ -102,6 +102,7 @@ void test_float_vector_gbc(void **state) {
         // Vector will be automatically freed at scope end
     }
 }
+#endif
 // ================================================================================ 
 // ================================================================================
 
@@ -2130,7 +2131,77 @@ void test_dictionary_gbc(void **state) {
 }
 // ================================================================================ 
 // ================================================================================ 
+
+void test_vector_dictionary(void **state) {
+    dict_fv* dict = init_floatv_dict();
+    bool result;
+    result = create_floatv_dict(dict, "one", 3);
+    assert_true(result);
+    push_back_float_vector(return_floatv_pointer(dict, "one"), 1.0);
+    push_back_float_vector(return_floatv_pointer(dict, "one"), 2.0);
+    push_back_float_vector(return_floatv_pointer(dict, "one"), 3.0);
+
+    float test_one[3] = {1.0, 2.0, 3.0};
+    float_v* vec1 = return_floatv_pointer(dict, "one");
+    for (size_t i = 0; i < float_vector_size(vec1); i++) {
+        assert_float_equal(float_vector_index(vec1, i), test_one[i], 1.0e-3);
+    }
+
+    result = create_floatv_dict(dict, "two", 3);
+    assert_true(result);
+    push_back_float_vector(return_floatv_pointer(dict, "two"), 4.0);
+    push_back_float_vector(return_floatv_pointer(dict, "two"), 5.0);
+    push_back_float_vector(return_floatv_pointer(dict, "two"), 6.0);
+
+    float test_two[3] = {4.0, 5.0, 6.0};
+    float_v* vec2 = return_floatv_pointer(dict, "two");
+    for (size_t i = 0; i < float_vector_size(vec2); i++) {
+        assert_float_equal(float_vector_index(vec2, i), test_two[i], 1.0e-3);
+    }
+
+    free_floatv_dict(dict);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_vector_dictionary_resize(void **state) {
+    dict_fv* dict = init_floatv_dict();
+    bool result;
+    result = create_floatv_dict(dict, "one", 3);
+    assert_true(result);
+    push_back_float_vector(return_floatv_pointer(dict, "one"), 1.0);
+    push_back_float_vector(return_floatv_pointer(dict, "one"), 2.0);
+    push_back_float_vector(return_floatv_pointer(dict, "one"), 3.0);
+    push_back_float_vector(return_floatv_pointer(dict, "one"), 4.0);
+    push_back_float_vector(return_floatv_pointer(dict, "one"), 5.0);
+
+    float test_one[5] = {1.0, 2.0, 3.0, 4.0, 5.0};
+    float_v* vec1 = return_floatv_pointer(dict, "one");
+    for (size_t i = 0; i < float_vector_size(vec1); i++) {
+        assert_float_equal(float_vector_index(vec1, i), test_one[i], 1.0e-3);
+    }
+    free_floatv_dict(dict);
+}
+// -------------------------------------------------------------------------------- 
+
+#if defined(__GNUC__) || defined(__clang__)
+    void test_vector_dictionary_gbc(void **state) {
+        FDICTV_GBC dict_fv* dict = init_floatv_dict();
+        bool result;
+        result = create_floatv_dict(dict, "one", 3);
+        assert_true(result);
+        push_back_float_vector(return_floatv_pointer(dict, "one"), 1.0);
+        push_back_float_vector(return_floatv_pointer(dict, "one"), 2.0);
+        push_back_float_vector(return_floatv_pointer(dict, "one"), 3.0);
+        push_back_float_vector(return_floatv_pointer(dict, "one"), 4.0);
+        push_back_float_vector(return_floatv_pointer(dict, "one"), 5.0);
+
+        float test_one[5] = {1.0, 2.0, 3.0, 4.0, 5.0};
+        float_v* vec1 = return_floatv_pointer(dict, "one");
+        for (size_t i = 0; i < float_vector_size(vec1); i++) {
+            assert_float_equal(float_vector_index(vec1, i), test_one[i], 1.0e-3);
+        }
+    }
 #endif
-// ================================================================================
-// ================================================================================
+// ================================================================================ 
+// ================================================================================ 
 // eof
