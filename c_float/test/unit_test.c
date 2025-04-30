@@ -131,7 +131,9 @@ const struct CMUnitTest test_dict[] = {
     cmocka_unit_test_setup_teardown(test_foreach_float_dict_null, setup, teardown),
     cmocka_unit_test(test_vector_dictionary),
     cmocka_unit_test(test_vector_dictionary_resize),
-    cmocka_unit_test(test_vector_dictionary_gbc)
+    cmocka_unit_test(test_vector_dictionary_gbc),
+    cmocka_unit_test(test_pop_vector_dictionary),
+    cmocka_unit_test(test_insert_floatv_dict_basic)
 };
 // ================================================================================ 
 // ================================================================================ 

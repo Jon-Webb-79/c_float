@@ -737,6 +737,19 @@ void _free_floatv_dict(dict_fv** dict);
      */
     #define FDICTV_GBC __attribute__((cleanup(_free_floatv_dict)))
 #endif
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @brief determines if a key value pair exists in a vector dictionary
+ *
+ * @param dict The float vector dictionary 
+ * @param key The ket value being searched for 
+ * @return true if the key value pair exists, false otherwise.
+ */
+bool has_key_floatv_dict(const dict_fv* dict, const char* key);
+// -------------------------------------------------------------------------------- 
+
+bool insert_floatv_dict(dict_fv* dict, const char* key, float_v* vec);
 // ================================================================================ 
 // ================================================================================ 
 #ifdef __cplusplus

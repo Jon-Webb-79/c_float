@@ -2202,6 +2202,90 @@ void test_vector_dictionary_resize(void **state) {
         }
     }
 #endif
+// --------------------------------------------------------------------------------
+
+void test_pop_vector_dictionary(void **state) {
+    dict_fv* dict = init_floatv_dict();
+    bool result;
+    result = create_floatv_dict(dict, "one", 3);
+    assert_true(result);
+    push_back_float_vector(return_floatv_pointer(dict, "one"), 1.0);
+    push_back_float_vector(return_floatv_pointer(dict, "one"), 2.0);
+
+    float test_one[3] = {1.0, 2.0, 3.0};
+    float_v* vec1 = return_floatv_pointer(dict, "one");
+    for (size_t i = 0; i < float_vector_size(vec1); i++) {
+        assert_float_equal(float_vector_index(vec1, i), test_one[i], 1.0e-3);
+    }
+
+    result = create_floatv_dict(dict, "two", 3);
+    assert_true(result);
+    push_back_float_vector(return_floatv_pointer(dict, "two"), 4.0);
+    push_back_float_vector(return_floatv_pointer(dict, "two"), 5.0);
+
+    float test_two[3] = {4.0, 5.0, 6.0};
+    float_v* vec2 = return_floatv_pointer(dict, "two");
+    for (size_t i = 0; i < float_vector_size(vec2); i++) {
+        assert_float_equal(float_vector_index(vec2, i), test_two[i], 1.0e-3);
+    }
+
+    pop_floatv_dict(dict, "two");
+    assert_false(has_key_floatv_dict(dict, "two"));
+    assert_true(has_key_floatv_dict(dict, "one"));
+
+    free_floatv_dict(dict);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_insert_floatv_dict_basic(void **state) {
+    (void)state;  // unused
+
+    dict_fv* dict = init_floatv_dict();
+    assert_non_null(dict);
+
+    // Valid DYNAMIC vector
+    float_v* vec1 = init_float_vector(3);
+    assert_non_null(vec1);
+    assert_int_equal(vec1->alloc_type, DYNAMIC);
+
+    bool result = insert_floatv_dict(dict, "key1", vec1);
+    assert_true(result);
+
+    // Confirm key exists
+    assert_true(has_key_floatv_dict(dict, "key1"));
+
+    // Try inserting same key again — should fail
+    float_v* vec2 = init_float_vector(2);
+    assert_non_null(vec2);
+    errno = 0;
+    result = insert_floatv_dict(dict, "key1", vec2);
+    assert_false(result);
+    assert_int_equal(errno, EEXIST);
+    free_float_vector(vec2);  // Manual cleanup for rejected value
+
+    // Try inserting STATIC vector — should fail
+    float_v vec3 = init_float_array(2);  // This is heap-wrapped, but STATIC
+    assert_int_equal(vec3.alloc_type, STATIC);
+    errno = 0;
+    result = insert_floatv_dict(dict, "key_static", &vec3);
+    assert_false(result);
+    assert_int_equal(errno, EPERM);
+
+    // NULL input tests
+    errno = 0;
+    assert_false(insert_floatv_dict(NULL, "key", vec1));
+    assert_int_equal(errno, EINVAL);
+
+    errno = 0;
+    assert_false(insert_floatv_dict(dict, NULL, vec1));
+    assert_int_equal(errno, EINVAL);
+
+    errno = 0;
+    assert_false(insert_floatv_dict(dict, "keyX", NULL));
+    assert_int_equal(errno, EINVAL);
+
+    free_floatv_dict(dict);
+}
 // ================================================================================ 
 // ================================================================================ 
 // eof

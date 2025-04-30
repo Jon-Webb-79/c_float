@@ -355,6 +355,12 @@ void test_vector_dictionary_resize(void **state);
 #if defined(__GNUC__) || defined(__clang__)
     void test_vector_dictionary_gbc(void **state);
 #endif
+// -------------------------------------------------------------------------------- 
+
+void test_pop_vector_dictionary(void **state);
+// -------------------------------------------------------------------------------- 
+
+void test_insert_floatv_dict_basic(void **state);
 // ================================================================================ 
 // ================================================================================ 
 #endif /* test_H */

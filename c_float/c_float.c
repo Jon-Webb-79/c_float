@@ -1669,11 +1669,8 @@ bool pop_floatv_dict(dict_fv* dict, const char* key) {
             }
             
             // Clean up node memory
+            free_float_vector(current->value);
             free(current->key);
-            if (current->value->alloc_type == STATIC)
-                free(current->value);
-            else 
-                free_float_vector(current->value);
             free(current);
             
             return true;
@@ -1736,6 +1733,86 @@ void _free_floatv_dict(dict_fv** dict_ptr) {
         free_floatv_dict(*dict_ptr);
         *dict_ptr = NULL;  // Prevent use-after-free
     }
+}
+// -------------------------------------------------------------------------------- 
+
+bool has_key_floatv_dict(const dict_fv* dict, const char* key) {
+    if (!dict || !key) {
+        errno = EINVAL;
+        return false;
+    }
+
+    size_t index = hash_function(key, HASH_SEED) % dict->alloc;
+
+    for (const fvdictNode* current = dict->keyValues[index].next; current; current = current->next) {
+        if (strcmp(current->key, key) == 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+// -------------------------------------------------------------------------------- 
+
+bool insert_floatv_dict(dict_fv* dict, const char* key, float_v* value) {
+    if (!dict || !key || !value) {
+        errno = EINVAL;
+        return false;
+    }
+
+    // Only allow insertion of DYNAMIC vectors
+    if (value->alloc_type != DYNAMIC) {
+        errno = EPERM;  // Operation not permitted
+        return false;
+    }
+
+    // Resize if load factor exceeded
+    if (dict->hash_size >= dict->alloc * LOAD_FACTOR_THRESHOLD) {
+        size_t new_size = (dict->alloc < VEC_THRESHOLD)
+                          ? dict->alloc * 2
+                          : dict->alloc + VEC_FIXED_AMOUNT;
+
+        if (!resize_dictv(dict, new_size)) {
+            return false;
+        }
+    }
+
+    size_t index = hash_function(key, HASH_SEED) % dict->alloc;
+
+    // Check for existing key
+    for (fvdictNode* current = dict->keyValues[index].next; current; current = current->next) {
+        if (strcmp(current->key, key) == 0) {
+            errno = EEXIST;
+            return false;
+        }
+    }
+
+    // Allocate new key string
+    char* new_key = strdup(key);
+    if (!new_key) {
+        errno = ENOMEM;
+        return false;
+    }
+
+    // Allocate node
+    fvdictNode* new_node = malloc(sizeof(fvdictNode));
+    if (!new_node) {
+        free(new_key);
+        errno = ENOMEM;
+        return false;
+    }
+
+    new_node->key = new_key;
+    new_node->value = value;
+    new_node->next = dict->keyValues[index].next;
+    dict->keyValues[index].next = new_node;
+
+    dict->hash_size++;
+    if (new_node->next == NULL) {
+        dict->len++;
+    }
+
+    return true;
 }
 // ================================================================================ 
 // ================================================================================ 
