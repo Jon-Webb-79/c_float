@@ -2286,6 +2286,40 @@ void test_insert_floatv_dict_basic(void **state) {
 
     free_floatv_dict(dict);
 }
+// -------------------------------------------------------------------------------- 
+
+void test_floatv_size_macros(void **state) {
+    dict_fv* dict = init_floatv_dict();
+    bool result;
+    result = create_floatv_dict(dict, "one", 3);
+    assert_true(result);
+    push_back_float_vector(return_floatv_pointer(dict, "one"), 1.0);
+    push_back_float_vector(return_floatv_pointer(dict, "one"), 2.0);
+    push_back_float_vector(return_floatv_pointer(dict, "one"), 3.0);
+
+    float test_one[3] = {1.0, 2.0, 3.0};
+    float_v* vec1 = return_floatv_pointer(dict, "one");
+    for (size_t i = 0; i < float_vector_size(vec1); i++) {
+        assert_float_equal(float_vector_index(vec1, i), test_one[i], 1.0e-3);
+    }
+
+    result = create_floatv_dict(dict, "two", 3);
+    assert_true(result);
+    push_back_float_vector(return_floatv_pointer(dict, "two"), 4.0);
+    push_back_float_vector(return_floatv_pointer(dict, "two"), 5.0);
+    push_back_float_vector(return_floatv_pointer(dict, "two"), 6.0);
+
+    float test_two[3] = {4.0, 5.0, 6.0};
+    float_v* vec2 = return_floatv_pointer(dict, "two");
+    for (size_t i = 0; i < float_vector_size(vec2); i++) {
+        assert_float_equal(float_vector_index(vec2, i), test_two[i], 1.0e-3);
+    }
+    assert_int_equal(16, f_alloc(dict));
+    assert_int_equal(2, f_size(dict));
+    assert_int_equal(2, float_dictv_hash_size(dict));
+
+    free_floatv_dict(dict);
+}
 // ================================================================================ 
 // ================================================================================ 
 // eof

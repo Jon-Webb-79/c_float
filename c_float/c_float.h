@@ -610,48 +610,6 @@ typedef void (*dict_iterator)(const char* key, float value, void* user_data);
  */
 bool foreach_float_dict(const dict_f* dict, dict_iterator iter, void* user_data);
 // ================================================================================ 
-// ================================================================================ 
-// GENERIC MACROS
-
-/**
- * @macro f_size
- * @brief Generic macro to get the number of elements in a float container
- *
- * This generic macro provides a unified interface for getting the current number
- * of elements in any float container type. It automatically selects the appropriate
- * size function based on the container type.
- * Currently supported container types:
- * - float_v (calls float_vector_size)
- * Additional container types will be added as the library expands.
- *
- * @param f_struct Pointer to float container structure
- * @return Size (number of elements) in the container
- *         Returns LONG_MAX and sets errno to EINVAL for invalid input
- */
-#define f_size(f_struct) _Generic((f_struct), \
-    float_v*: float_vector_size, \
-    dict_f*: float_dict_size)(f_struct)
-// --------------------------------------------------------------------------------
-
-/**
- * @macro f_alloc
- * @brief Generic macro to get the allocation size of a float container
- *
- * This generic macro provides a unified interface for getting the current allocation
- * size in any float container type. It automatically selects the appropriate
- * allocation function based on the container type.
- * Currently supported container types:
- * - float_v (calls float_vector_alloc)
- * Additional container types will be added as the library expands.
- *
- * @param f_struct Pointer to float container structure
- * @return Allocation size (capacity) of the container
- *         Returns LONG_MAX and sets errno to EINVAL for invalid input
- */
-#define f_alloc(f_struct) _Generic((f_struct), \
-    float_v*: float_vector_alloc, \
-    dict_f*: float_dict_alloc) (f_struct)
-// ================================================================================ 
 // ================================================================================
 // VECTOR DICTIONARY PROTOTYPES 
 
@@ -743,13 +701,98 @@ void _free_floatv_dict(dict_fv** dict);
  * @brief determines if a key value pair exists in a vector dictionary
  *
  * @param dict The float vector dictionary 
- * @param key The ket value being searched for 
+ * @param key The key value being searched for 
  * @return true if the key value pair exists, false otherwise.
  */
 bool has_key_floatv_dict(const dict_fv* dict, const char* key);
 // -------------------------------------------------------------------------------- 
 
+/**
+ * @brief Inserts an already existing dynamically allocated array to dictionary
+ *
+ * @param dict The float vector dictionary 
+ * @param key The key value being searched for 
+ * @param vec A dynamically allocated array of type float_v
+ * @return true if the key value pair exists, false otherwise.
+ */
 bool insert_floatv_dict(dict_fv* dict, const char* key, float_v* vec);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @brief Gets the number of non-empty buckets in the vector dictionary.
+ *
+ * Returns the total number of buckets in the hash table that contain at least one key-value pair.
+ *
+ * @param dict Pointer to the dictionary.
+ * @return The number of non-empty buckets.
+ */
+size_t float_dictv_size(const dict_fv* dict);
+// --------------------------------------------------------------------------------
+
+/**
+ * @brief Gets the total capacity of the vector dictionary.
+ *
+ * Returns the total number of buckets currently allocated in the hash table.
+ *
+ * @param dict Pointer to the dictionary.
+ * @return The total number of buckets in the dictionary.
+ */
+size_t float_dictv_alloc(const dict_fv* dict);
+// --------------------------------------------------------------------------------
+
+/**
+ * @brief Gets the total number of key-value pairs in the vector dictionary.
+ *
+ * Returns the total number of key-value pairs currently stored in the dictionary.
+ *
+ * @param dict Pointer to the dictionary.
+ * @return The number of key-value pairs.
+ */
+size_t float_dictv_hash_size(const dict_fv* dict);
+// ================================================================================ 
+// ================================================================================ 
+// GENERIC MACROS
+
+/**
+ * @macro f_size
+ * @brief Generic macro to get the number of elements in a float container
+ *
+ * This generic macro provides a unified interface for getting the current number
+ * of elements in any float container type. It automatically selects the appropriate
+ * size function based on the container type.
+ * Currently supported container types:
+ * - float_v (calls float_vector_size)
+ * Additional container types will be added as the library expands.
+ *
+ * @param f_struct Pointer to float container structure
+ * @return Size (number of elements) in the container
+ *         Returns LONG_MAX and sets errno to EINVAL for invalid input
+ */
+#define f_size(f_struct) _Generic((f_struct), \
+    float_v*: float_vector_size, \
+    dict_f*: float_dict_size, \
+    dict_fv*: float_dictv_size) (f_struct)
+// --------------------------------------------------------------------------------
+
+/**
+ * @macro f_alloc
+ * @brief Generic macro to get the allocation size of a float container
+ *
+ * This generic macro provides a unified interface for getting the current allocation
+ * size in any float container type. It automatically selects the appropriate
+ * allocation function based on the container type.
+ * Currently supported container types:
+ * - float_v (calls float_vector_alloc)
+ * Additional container types will be added as the library expands.
+ *
+ * @param f_struct Pointer to float container structure
+ * @return Allocation size (capacity) of the container
+ *         Returns LONG_MAX and sets errno to EINVAL for invalid input
+ */
+#define f_alloc(f_struct) _Generic((f_struct), \
+    float_v*: float_vector_alloc, \
+    dict_f*: float_dict_alloc, \
+    dict_fv*: float_dictv_alloc) (f_struct)
 // ================================================================================ 
 // ================================================================================ 
 #ifdef __cplusplus

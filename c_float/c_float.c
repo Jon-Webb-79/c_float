@@ -1814,6 +1814,33 @@ bool insert_floatv_dict(dict_fv* dict, const char* key, float_v* value) {
 
     return true;
 }
+// -------------------------------------------------------------------------------- 
+
+size_t float_dictv_size(const dict_fv* dict) {
+    if (!dict) {
+        errno = EINVAL;
+        return SIZE_MAX;
+    }
+    return dict->len;
+}
+// --------------------------------------------------------------------------------
+
+size_t float_dictv_alloc(const dict_fv* dict) {
+    if (!dict) {
+        errno = EINVAL;
+        return SIZE_MAX;
+    }
+    return dict->alloc;
+}
+// -------------------------------------------------------------------------------- 
+
+size_t float_dictv_hash_size(const dict_fv* dict) {
+    if (!dict) {
+        errno = EINVAL;
+        return SIZE_MAX;
+    }
+    return dict->hash_size;
+}
 // ================================================================================ 
 // ================================================================================ 
 // eof
