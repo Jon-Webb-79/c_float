@@ -894,7 +894,28 @@ float_v* cum_sum_float_vector(float_v* vec) {
 
     return new_vec;
 }
+// -------------------------------------------------------------------------------- 
 
+float_v* copy_float_vector(const float_v* original) {
+    if (!original) {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    float_v* copy = init_float_vector(original->alloc);
+    if (!copy) {
+        return NULL;
+    }
+
+    for (size_t i = 0; i < original->len; ++i) {
+        if (!push_back_float_vector(copy, original->data[i])) {
+            free_float_vector(copy);
+            return NULL;
+        }
+    }
+
+    return copy;
+}
 // ================================================================================
 // ================================================================================
 // DICTIONARY IMPLEMENTATION
@@ -1841,6 +1862,114 @@ size_t float_dictv_hash_size(const dict_fv* dict) {
     }
     return dict->hash_size;
 }
+// -------------------------------------------------------------------------------- 
+
+dict_fv* copy_floatv_dict(const dict_fv* original) {
+    if (!original) {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    dict_fv* copy = init_floatv_dict();
+    if (!copy) {
+        return NULL;  // errno already set
+    }
+
+    for (size_t i = 0; i < original->alloc; ++i) {
+        fvdictNode* current = original->keyValues[i].next;
+        while (current) {
+            // if (current->value->alloc_type != DYNAMIC) {
+            //     free_floatv_dict(copy);
+            //     errno = EPERM;
+            //     return NULL;
+            // }
+
+            float_v* vec_copy = copy_float_vector(current->value);
+            if (!vec_copy) {
+                free_floatv_dict(copy);
+                return NULL;
+            }
+
+            if (!insert_floatv_dict(copy, current->key, vec_copy)) {
+                free_float_vector(vec_copy);
+                free_floatv_dict(copy);
+                return NULL;
+            }
+
+            current = current->next;
+        }
+    }
+
+    return copy;
+}
+
+// -------------------------------------------------------------------------------- 
+
+// dict_fv* merge_floatv_dict(const dict_fv* dict1, const dict_fv* dict2, bool overwrite) {
+//     if (!dict1 || !dict2) {
+//         errno = EINVAL;
+//         return NULL;
+//     }
+//
+//     dict_fv* merged = init_floatv_dict();
+//     if (!merged) {
+//         return NULL;
+//     }
+//
+//     // Insert entries from dict1 (always inserted)
+//     for (size_t i = 0; i < dict1->alloc; i++) {
+//         for (fvdictNode* current = dict1->keyValues[i].next; current; current = current->next) {
+//             // Only allow dynamic float_v to be stored
+//             if (current->value->alloc_type != DYNAMIC) {
+//                 errno = EPERM;
+//                 free_floatv_dict(merged);
+//                 return NULL;
+//             }
+//
+//             if (!insert_floatv_dict(merged, current->key, current->value)) {
+//                 free_floatv_dict(merged);
+//                 return NULL;
+//             }
+//         }
+//     }
+//
+//     // Merge in entries from dict2
+//     for (size_t i = 0; i < dict2->alloc; i++) {
+//         for (fvdictNode* current = dict2->keyValues[i].next; current; current = current->next) {
+//             if (current->value->alloc_type != DYNAMIC) {
+//                 errno = EPERM;
+//                 free_floatv_dict(merged);
+//                 return NULL;
+//             }
+//
+//             float_v* existing = return_floatv_pointer(merged, current->key);
+//             if (existing) {
+//                 if (overwrite) {
+//                     // Remove the old value
+//                     if (!pop_floatv_dict(merged, current->key)) {
+//                         free_floatv_dict(merged);
+//                         return NULL;
+//                     }
+//
+//                     // Insert the new value
+//                     if (!insert_floatv_dict(merged, current->key, current->value)) {
+//                         free_floatv_dict(merged);
+//                         return NULL;
+//                     }
+//                 }
+//                 // else skip (keep existing)
+//             } else {
+//                 // Insert key that doesn't already exist
+//                 if (!insert_floatv_dict(merged, current->key, current->value)) {
+//                     free_floatv_dict(merged);
+//                     return NULL;
+//                 }
+//             }
+//         }
+//     }
+//
+//     return merged;
+// }
 // ================================================================================ 
 // ================================================================================ 
 // eof

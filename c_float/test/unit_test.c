@@ -134,7 +134,17 @@ const struct CMUnitTest test_dict[] = {
     cmocka_unit_test(test_vector_dictionary_gbc),
     cmocka_unit_test(test_pop_vector_dictionary),
     cmocka_unit_test(test_insert_floatv_dict_basic),
-    cmocka_unit_test(test_floatv_size_macros)
+    cmocka_unit_test(test_floatv_size_macros),
+    cmocka_unit_test(test_copy_floatv_dict_success),
+    cmocka_unit_test(test_copy_floatv_dict_null_input),
+    cmocka_unit_test(test_copy_floatv_dict_static_vector),
+    // cmocka_unit_test(test_copy_floatv_dict_multiple_entries),
+    // cmocka_unit_test(test_copy_floatv_dict_independence),
+    // cmocka_unit_test(test_merge_floatv_dict_unique_keys),
+    // cmocka_unit_test(test_merge_floatv_dict_no_overwrite),
+    // cmocka_unit_test(test_merge_floatv_dict_overwrite),
+    // cmocka_unit_test(test_merge_floatv_dict_reject_static),
+    // cmocka_unit_test(test_merge_floatv_dict_null_inputs),
 };
 // ================================================================================ 
 // ================================================================================ 

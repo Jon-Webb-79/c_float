@@ -396,6 +396,15 @@ float stdev_float_vector(float_v* vec);
  *         vec-data is NULL, or if length is 0 and returns FLT_MAX
  */
 float_v* cum_sum_float_vector(float_v* vec);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @brief creates a deep copy of a vector
+ *
+ * @param original A vector to be copied 
+ * @return A copy of a float vector
+ */
+float_v* copy_float_vector(const float_v* original);
 // ================================================================================ 
 // ================================================================================ 
 // DICTIONARY PROTOTYPES 
@@ -749,6 +758,28 @@ size_t float_dictv_alloc(const dict_fv* dict);
  * @return The number of key-value pairs.
  */
 size_t float_dictv_hash_size(const dict_fv* dict);
+// --------------------------------------------------------------------------------
+
+/**
+ * @brief Creates a deep copy of a vector float dictionary 
+ *
+ * @param original A float vector dictionary 
+ * @return A copy of a dictionary
+ */
+dict_fv* copy_floatv_dict(const dict_fv* original);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @brief merges to float vector dictionaries
+ *
+ * Returns a merged float vector dictionary
+ *
+ * @param dict1 Pointer to a dictionary.
+ * @param dict2 Pointer to a dictionary
+ * @param overwrite true if the values should be overwritten, false otherwise
+ * @return A merged dictionary
+ */
+// dict_fv* merge_floatv_dict(const dict_fv* dict1, const dict_fv* dict2, bool overwrite);
 // ================================================================================ 
 // ================================================================================ 
 // GENERIC MACROS
