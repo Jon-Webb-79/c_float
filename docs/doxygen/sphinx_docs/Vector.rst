@@ -1935,3 +1935,50 @@ Special Value Handling:
    The standard deviation calculation uses a population standard deviation
    formula (dividing by n), not a sample standard deviation formula
    (dividing by n-1).
+
+Copy Vector 
+~~~~~~~~~~~
+.. c:function:: float_v* copy_float_vector(float_v* vec)
+
+   Creates a deep copy of a vector or array.
+
+   :param vec: The vector or array to be copied
+   :returns: New vector containing a copy of the input vector
+   :raises: Sets errno to EINVAL for NULL input or empty vector, ENOMEM for failure to create new vector
+
+   .. note:: 
+
+      This method will always output a dynamically allocated array even if the input array is statically allocated.
+
+   Example with dynamic vector:
+
+   .. code-block:: c
+
+      float_v* vec FLTVEC_GBC = init_float_vector(4);
+      
+      // Add values
+      push_back_float_vector(vec, 1.0f);
+      push_back_float_vector(vec, 2.0f);
+      push_back_float_vector(vec, 3.0f);
+      push_back_float_vector(vec, 4.0f);
+      
+      printf("Original values: ");
+      for (size_t i = 0; i < f_size(vec); i++) {
+          printf("%.1f ", float_vector_index(vec, i));
+      }
+      printf("\n");
+
+      float_v* FLTVEC_GBC new_vec = copy_float_vector(vec);
+      
+      if (new_vec != NULL) {
+          printf("New values: ");
+          for (size_t i = 0; i < f_size(new_vec); i++) {
+              printf("%.1f ", float_vector_index(new_vec, i));
+          }
+          printf("\n");
+      }
+
+   Output::
+
+      Original values: 1.0 2.0 3.0 4.0
+      New values: 1.0 2.0 3.0 4.0
