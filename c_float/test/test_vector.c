@@ -2604,7 +2604,95 @@ void test_clear_floatv_dict_reuse_after_clear(void **state) {
 
     free_floatv_dict(dict);
 }
+// -------------------------------------------------------------------------------- 
 
+static void key_counter(const char* key, const float_v* value, void* user_data) {
+    (void)key; (void)value;
+    int* counter = (int*)user_data;
+    (*counter)++;
+}
+
+void test_foreach_floatv_dict_counts_keys(void **state) {
+    (void)state;
+
+    dict_fv* dict = init_floatv_dict();
+    create_floatv_dict(dict, "A", 2);
+    create_floatv_dict(dict, "B", 3);
+    create_floatv_dict(dict, "C", 1);
+
+    int count = 0;
+    bool result = foreach_floatv_dict(dict, key_counter, &count);
+
+    assert_true(result);
+    assert_int_equal(count, 3);
+
+    free_floatv_dict(dict);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_foreach_floatv_dict_with_null_dict(void **state) {
+    (void)state;
+    errno = 0;
+
+    bool result = foreach_floatv_dict(NULL, key_counter, NULL);
+    assert_false(result);
+    assert_int_equal(errno, EINVAL);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_foreach_floatv_dict_with_null_callback(void **state) {
+    (void)state;
+
+    dict_fv* dict = init_floatv_dict();
+    create_floatv_dict(dict, "temp", 1);
+
+    errno = 0;
+    bool result = foreach_floatv_dict(dict, NULL, NULL);
+
+    assert_false(result);
+    assert_int_equal(errno, EINVAL);
+
+    free_floatv_dict(dict);
+}
+// -------------------------------------------------------------------------------- 
+
+typedef struct {
+    float sum;
+    size_t count;
+} accumulator;
+
+static void accumulate_values(const char* key, const float_v* vec, void* user_data) {
+    (void)key;
+    accumulator* acc = (accumulator*)user_data;
+    for (size_t i = 0; i < float_vector_size(vec); ++i) {
+        acc->sum += float_vector_index(vec, i);
+        acc->count++;
+    }
+}
+
+void test_foreach_floatv_dict_accumulates_sum(void **state) {
+    (void)state;
+
+    dict_fv* dict = init_floatv_dict();
+    create_floatv_dict(dict, "sensor1", 3);
+    create_floatv_dict(dict, "sensor2", 2);
+
+    push_back_float_vector(return_floatv_pointer(dict, "sensor1"), 1.0f);
+    push_back_float_vector(return_floatv_pointer(dict, "sensor1"), 2.0f);
+    push_back_float_vector(return_floatv_pointer(dict, "sensor1"), 3.0f);
+
+    push_back_float_vector(return_floatv_pointer(dict, "sensor2"), 4.0f);
+    push_back_float_vector(return_floatv_pointer(dict, "sensor2"), 5.0f);
+
+    accumulator acc = {0.0f, 0};
+    bool result = foreach_floatv_dict(dict, accumulate_values, &acc);
+
+    assert_true(result);
+    assert_int_equal(acc.count, 5);
+    assert_float_equal(acc.sum, 15.0f, 0.0001);
+
+    free_floatv_dict(dict);
+}
 // ================================================================================ 
 // ================================================================================ 
 // eof

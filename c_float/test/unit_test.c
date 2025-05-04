@@ -148,6 +148,10 @@ const struct CMUnitTest test_dict[] = {
     cmocka_unit_test(test_clear_floatv_dict_basic),
     cmocka_unit_test(test_clear_floatv_dict_empty),
     cmocka_unit_test(test_clear_floatv_dict_reuse_after_clear),
+    cmocka_unit_test(test_foreach_floatv_dict_counts_keys),
+    cmocka_unit_test(test_foreach_floatv_dict_with_null_dict),
+    cmocka_unit_test(test_foreach_floatv_dict_with_null_callback),
+    cmocka_unit_test(test_foreach_floatv_dict_accumulates_sum),
 };
 // ================================================================================ 
 // ================================================================================ 

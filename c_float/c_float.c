@@ -1986,6 +1986,24 @@ void clear_floatv_dict(dict_fv* dict) {
     dict->hash_size = 0;
     dict->len = 0;
 }
+// -------------------------------------------------------------------------------- 
+
+bool foreach_floatv_dict(const dict_fv* dict, dict_fv_iterator iter, void* user_data) {
+    if (!dict || !iter) {
+        errno = EINVAL;
+        return false;
+    }
+
+    for (size_t i = 0; i < dict->alloc; ++i) {
+        fvdictNode* current = dict->keyValues[i].next;
+        while (current) {
+            iter(current->key, current->value, user_data);
+            current = current->next;
+        }
+    }
+
+    return true;
+}
 // ================================================================================ 
 // ================================================================================ 
 // eof

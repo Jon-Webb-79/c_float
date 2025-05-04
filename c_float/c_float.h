@@ -788,6 +788,29 @@ dict_fv* merge_floatv_dict(const dict_fv* dict1, const dict_fv* dict2, bool over
  * @param dict Pointer to a dictionary.
  */
 void clear_floatv_dict(dict_fv* dict);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @brief Iterator function type for float vector dictionary traversal
+ *
+ * @param key        Key string of the current entry
+ * @param value      Pointer to the associated float_v vector
+ * @param user_data  Optional context pointer passed through
+ */
+typedef void (*dict_fv_iterator)(const char* key, const float_v* value, void* user_data);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @brief Applies a callback function to every key-value pair in a float_v dictionary
+ *
+ * Iterates over all entries in the hash table and invokes the callback for each.
+ *
+ * @param dict       Pointer to the dictionary
+ * @param iter       Function pointer to apply to each key/value pair
+ * @param user_data  Optional context pointer passed through to the callback
+ * @return true on success, false if dict or iter is NULL (errno set to EINVAL)
+ */
+bool foreach_floatv_dict(const dict_fv* dict, dict_fv_iterator iter, void* user_data);
 // ================================================================================ 
 // ================================================================================ 
 // GENERIC MACROS
