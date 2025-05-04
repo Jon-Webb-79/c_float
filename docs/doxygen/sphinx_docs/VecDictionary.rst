@@ -260,3 +260,198 @@ return_floatv_pointer
    - Always check the return value for NULL before using the pointer.
    - If the key does not exist, `errno` is set to `ENOENT` and NULL is returned.
 
+Data Removal
+------------
+
+pop_floatv_dict
+~~~~~~~~~~~~~~~
+.. c:function:: bool pop_floatv_dict(dict_fv* dict, const char* key)
+
+   Removes a key-vector pair from the dictionary and deallocates the associated vector.
+
+   This function deletes the `float_v` vector associated with the given key and removes
+   the key from the hash table. It is a safe way to free memory associated with specific
+   entries without affecting the rest of the dictionary.
+
+   :param dict: Target dictionary
+   :param key: Key string to remove
+   :returns: true if the entry was found and removed, false otherwise
+   :raises: 
+     - `EINVAL` if `dict` or `key` is NULL  
+     - `ENOENT` if the key does not exist in the dictionary
+
+   Example:
+
+   .. code-block:: c
+
+      dict_fv* dict FDICTV_GBC = init_floatv_dict();
+      create_floatv_dict(dict, "data", 5);
+
+      // Add some values
+      float_v* v = return_floatv_pointer(dict, "data");
+      push_back_float_vector(v, 3.14f);
+      push_back_float_vector(v, 2.71f);
+
+      // Remove the entry
+      if (pop_floatv_dict(dict, "data")) {
+          printf("Key 'data' and associated vector removed successfully\n");
+      }
+
+   Output:
+
+   .. code-block:: bash
+
+      Key 'data' and associated vector removed successfully
+
+   Notes:
+
+   - If the key is not found, the function returns false and sets `errno` to `ENOENT`.
+   - The memory for both the vector and key string is freed automatically.
+   - After removal, attempting to access the key again will result in an error.
+
+Utility Functions
+-----------------
+
+.. _floatv-dict-size-func:
+
+float_dictv_size
+~~~~~~~~~~~~~~~~
+.. c:function:: size_t float_dictv_size(const dict_fv* dict)
+
+  Returns the number of non-empty buckets in the float vector dictionary.  
+  The user can also use the :ref:`f_size <f-size-macro>` Generic Macro 
+  in place of this function.
+
+  :param dict: Target float vector dictionary
+  :returns: Number of non-empty buckets, or SIZE_MAX on error
+  :raises: Sets errno to EINVAL for NULL input
+
+  Example with distinct keys:
+
+  .. code-block:: c
+
+     dict_fv* dict = init_floatv_dict();
+
+     create_floatv_dict(dict, "temperature", 10);
+     create_floatv_dict(dict, "humidity", 5);
+     create_floatv_dict(dict, "pressure", 3);
+
+     printf("Number of buckets used: %zu\n", float_dictv_size(dict));
+     printf("Total key-value pairs: %zu\n", float_dictv_hash_size(dict));
+
+     free_floatv_dict(dict);
+
+  Output::
+
+     Number of buckets used: 3
+     Total key-value pairs: 3
+
+  Example with hash collisions:
+
+  .. code-block:: c
+
+     dict_fv* dict = init_floatv_dict();
+
+     create_floatv_dict(dict, "aaa", 1);
+     create_floatv_dict(dict, "bbb", 1);
+     create_floatv_dict(dict, "ccc", 1); // These might hash to the same bucket
+
+     printf("Number of buckets used: %zu\n", float_dictv_size(dict));
+     printf("Total key-value pairs: %zu\n", float_dictv_hash_size(dict));
+
+     free_floatv_dict(dict);
+
+  Output::
+
+     Number of buckets used: 1
+     Total key-value pairs: 3
+
+.. _floatv-dict-alloc-func:
+
+float_dictv_alloc 
+~~~~~~~~~~~~~~~~~
+.. c:function:: size_t float_dictv_alloc(const dict_fv* dict)
+
+Returns the total number of hash buckets allocated in the float vector dictionary.
+The user can also use the :ref:f_alloc <f-alloc-macro> Generic Macro
+in place of this function.
+
+:param dict: Target float vector dictionary
+:returns: Total number of buckets, or SIZE_MAX on error
+:raises: Sets errno to EINVAL for NULL input
+
+Example showing automatic resizing:
+
+.. code-block:: c 
+
+    dict_fv* dict = init_floatv_dict();
+
+    printf("Initial allocation: %zu buckets\n", float_dictv_alloc(dict));
+    // printf("Initial allocation: %zu buckets\n", f_alloc(dict)); // Optional macro use
+
+    char key[20];
+    for (int i = 0; i < 30; ++i) {
+        sprintf(key, "key%d", i);
+        create_floatv_dict(dict, key, 4);
+
+        if (i % 10 == 0) {
+            printf("After %d insertions: %zu buckets\n", 
+                   i + 1, float_dictv_alloc(dict));
+        }
+    }
+
+    free_floatv_dict(dict);
+
+Output:: 
+
+   Initial allocation: 16 buckets
+   After 1 insertions: 16 buckets
+   After 11 insertions: 32 buckets
+   After 21 insertions: 48 buckets
+  
+float_dictv_hash_size 
+~~~~~~~~~~~~~~~~~~~~~
+.. c:function:: size_t float_dictv_hash_size(const dict_fv* dict)
+
+  Returns the total number of key-vector pairs in the dictionary.
+
+  :param dict: Target float vector dictionary
+  :returns: Number of key-value pairs, or SIZE_MAX on error
+  :raises: Sets errno to EINVAL for NULL input
+
+  Example with additions and deletions:
+
+  .. code-block:: c
+
+     dict_fv* dict = init_floatv_dict();
+
+     create_floatv_dict(dict, "sensor1", 5);
+     create_floatv_dict(dict, "sensor2", 5);
+     create_floatv_dict(dict, "sensor3", 5);
+
+     printf("Initial metrics:\n");
+     printf("  Total allocated: %zu\n", float_dictv_alloc(dict));
+     printf("  Buckets used:    %zu\n", float_dictv_size(dict));
+     printf("  Total entries:   %zu\n", float_dictv_hash_size(dict));
+
+     pop_floatv_dict(dict, "sensor2");
+
+     printf("\nAfter removal:\n");
+     printf("  Total allocated: %zu\n", float_dictv_alloc(dict));
+     printf("  Buckets used:    %zu\n", float_dictv_size(dict));
+     printf("  Total entries:   %zu\n", float_dictv_hash_size(dict));
+
+     free_floatv_dict(dict);
+
+  Output::
+
+     Initial metrics:
+       Total allocated: 16
+       Buckets used:    3
+       Total entries:   3
+
+     After removal:
+       Total allocated: 16
+       Buckets used:    2
+       Total entries:   2
+

@@ -43,7 +43,8 @@ vectors and statically allocated arrays.  It automatically selects:
 
 This macro simplifies size queries by providing a consistent interface regardless of
 the underlying type. This Macro may be safely used in place of the 
-:ref:`float_vector_size() <float-size-func>` and :ref:`float_dict_size() <float-dict-size-func>` functions.
+:ref:`float_vector_size() <float-size-func>`, :ref:`float_dict_size() <float-dict-size-func>` 
+and :ref:`float_dictv_size() <floatv-dict-size-func>` functions.
 
 Example:
 
@@ -73,7 +74,8 @@ and statically allocated arrays. It selects:
 
 This macro is particularly useful for capacity planning and debugging memory usage.
 This Macro may be safely used in place of the :ref:`float_vector_alloc() <float-alloc-func>`
-and :ref:`float_dict_alloc() <float-dict-alloc-func>` functions.
+:ref:`float_dict_alloc() <float-dict-alloc-func>` and 
+:ref:`float_dictv_alloc() <floatv-dict-alloc-func>` functions.
 
 Example:
 
