@@ -145,6 +145,9 @@ const struct CMUnitTest test_dict[] = {
     cmocka_unit_test(test_merge_floatv_dict_overwrite),
     cmocka_unit_test(test_merge_floatv_dict_reject_static),
     cmocka_unit_test(test_merge_floatv_dict_null_inputs),
+    cmocka_unit_test(test_clear_floatv_dict_basic),
+    cmocka_unit_test(test_clear_floatv_dict_empty),
+    cmocka_unit_test(test_clear_floatv_dict_reuse_after_clear),
 };
 // ================================================================================ 
 // ================================================================================ 

@@ -1954,6 +1954,38 @@ dict_fv* merge_floatv_dict(const dict_fv* dict1, const dict_fv* dict2, bool over
 
     return merged;
 }
+// -------------------------------------------------------------------------------- 
+
+void clear_floatv_dict(dict_fv* dict) {
+    if (!dict) {
+        errno = EINVAL;
+        return;
+    }
+
+    for (size_t i = 0; i < dict->alloc; ++i) {
+        fvdictNode* current = dict->keyValues[i].next;
+        dict->keyValues[i].next = NULL;
+
+        while (current) {
+            fvdictNode* next = current->next;
+
+            if (current->value) {
+                if (current->value->alloc_type == STATIC) {
+                    free(current->value);
+                } else {
+                    free_float_vector(current->value);
+                }
+            }
+
+            free(current->key);
+            free(current);
+            current = next;
+        }
+    }
+
+    dict->hash_size = 0;
+    dict->len = 0;
+}
 // ================================================================================ 
 // ================================================================================ 
 // eof

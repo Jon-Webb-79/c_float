@@ -780,6 +780,14 @@ dict_fv* copy_floatv_dict(const dict_fv* original);
  * @return A merged dictionary
  */
 dict_fv* merge_floatv_dict(const dict_fv* dict1, const dict_fv* dict2, bool overwrite);
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @brief Clears all keys and values in the vector dictionary
+ *
+ * @param dict Pointer to a dictionary.
+ */
+void clear_floatv_dict(dict_fv* dict);
 // ================================================================================ 
 // ================================================================================ 
 // GENERIC MACROS

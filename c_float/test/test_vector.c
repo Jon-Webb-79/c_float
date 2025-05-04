@@ -2548,26 +2548,62 @@ void test_merge_floatv_dict_unique_keys(void **state) {
 }
 // -------------------------------------------------------------------------------- 
 
-// void test_merge_floatv_dict_unique_keys(void **state) {
-//     (void)state;
-//
-//     dict_fv* dict1 = init_floatv_dict();
-//     dict_fv* dict2 = init_floatv_dict();
-//
-//     insert_floatv_dict(dict1, "x", init_float_vector(1));
-//     insert_floatv_dict(dict2, "y", init_float_vector(1));
-//     insert_floatv_dict(dict2, "z", init_float_vector(1));
-//
-//     dict_fv* merged = merge_floatv_dict(dict1, dict2, false);
-//     // assert_non_null(merged);
-//     // assert_true(has_key_floatv_dict(merged, "x"));
-//     // assert_true(has_key_floatv_dict(merged, "y"));
-//     // assert_true(has_key_floatv_dict(merged, "z"));
-//
-//     free_floatv_dict(dict1);
-//     free_floatv_dict(dict2);
-//     free_floatv_dict(merged);
-// }
+void test_clear_floatv_dict_basic(void **state) {
+    (void)state;
+
+    dict_fv* dict = init_floatv_dict();
+    assert_non_null(dict);
+
+    create_floatv_dict(dict, "a", 3);
+    create_floatv_dict(dict, "b", 2);
+
+    assert_true(has_key_floatv_dict(dict, "a"));
+    assert_true(has_key_floatv_dict(dict, "b"));
+    assert_int_equal(float_dictv_size(dict), 2);
+    assert_int_equal(float_dictv_hash_size(dict), 2);
+
+    clear_floatv_dict(dict);
+
+    assert_false(has_key_floatv_dict(dict, "a"));
+    assert_false(has_key_floatv_dict(dict, "b"));
+    assert_int_equal(float_dictv_size(dict), 0);
+    assert_int_equal(float_dictv_hash_size(dict), 0);
+
+    free_floatv_dict(dict);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_clear_floatv_dict_empty(void **state) {
+    (void)state;
+
+    dict_fv* dict = init_floatv_dict();
+    assert_non_null(dict);
+
+    clear_floatv_dict(dict);  // Should not crash
+    assert_int_equal(float_dictv_size(dict), 0);
+    assert_int_equal(float_dictv_hash_size(dict), 0);
+
+    free_floatv_dict(dict);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_clear_floatv_dict_reuse_after_clear(void **state) {
+    (void)state;
+
+    dict_fv* dict = init_floatv_dict();
+    assert_non_null(dict);
+
+    create_floatv_dict(dict, "temp1", 2);
+    create_floatv_dict(dict, "temp2", 2);
+    clear_floatv_dict(dict);
+
+    // Insert again after clear
+    create_floatv_dict(dict, "new", 2);
+    assert_true(has_key_floatv_dict(dict, "new"));
+    assert_int_equal(float_dictv_hash_size(dict), 1);
+
+    free_floatv_dict(dict);
+}
 
 // ================================================================================ 
 // ================================================================================ 
