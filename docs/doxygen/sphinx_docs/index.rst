@@ -76,6 +76,7 @@ Float Dictionary
 
    Vectors and Arrays <Vector>
    Dictionary <Dictionary>
+   Vector Dictionary <VecDictionary>
    Generic Macros <Macros>
 
 Indices and tables
