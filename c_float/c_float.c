@@ -1902,74 +1902,58 @@ dict_fv* copy_floatv_dict(const dict_fv* original) {
 
     return copy;
 }
-
 // -------------------------------------------------------------------------------- 
 
-// dict_fv* merge_floatv_dict(const dict_fv* dict1, const dict_fv* dict2, bool overwrite) {
-//     if (!dict1 || !dict2) {
-//         errno = EINVAL;
-//         return NULL;
-//     }
-//
-//     dict_fv* merged = init_floatv_dict();
-//     if (!merged) {
-//         return NULL;
-//     }
-//
-//     // Insert entries from dict1 (always inserted)
-//     for (size_t i = 0; i < dict1->alloc; i++) {
-//         for (fvdictNode* current = dict1->keyValues[i].next; current; current = current->next) {
-//             // Only allow dynamic float_v to be stored
-//             if (current->value->alloc_type != DYNAMIC) {
-//                 errno = EPERM;
-//                 free_floatv_dict(merged);
-//                 return NULL;
-//             }
-//
-//             if (!insert_floatv_dict(merged, current->key, current->value)) {
-//                 free_floatv_dict(merged);
-//                 return NULL;
-//             }
-//         }
-//     }
-//
-//     // Merge in entries from dict2
-//     for (size_t i = 0; i < dict2->alloc; i++) {
-//         for (fvdictNode* current = dict2->keyValues[i].next; current; current = current->next) {
-//             if (current->value->alloc_type != DYNAMIC) {
-//                 errno = EPERM;
-//                 free_floatv_dict(merged);
-//                 return NULL;
-//             }
-//
-//             float_v* existing = return_floatv_pointer(merged, current->key);
-//             if (existing) {
-//                 if (overwrite) {
-//                     // Remove the old value
-//                     if (!pop_floatv_dict(merged, current->key)) {
-//                         free_floatv_dict(merged);
-//                         return NULL;
-//                     }
-//
-//                     // Insert the new value
-//                     if (!insert_floatv_dict(merged, current->key, current->value)) {
-//                         free_floatv_dict(merged);
-//                         return NULL;
-//                     }
-//                 }
-//                 // else skip (keep existing)
-//             } else {
-//                 // Insert key that doesn't already exist
-//                 if (!insert_floatv_dict(merged, current->key, current->value)) {
-//                     free_floatv_dict(merged);
-//                     return NULL;
-//                 }
-//             }
-//         }
-//     }
-//
-//     return merged;
-// }
+dict_fv* merge_floatv_dict(const dict_fv* dict1, const dict_fv* dict2, bool overwrite) {
+    if (!dict1 || !dict2) {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    // Start by deep copying dict1
+    dict_fv* merged = copy_floatv_dict(dict1);
+    if (!merged) {
+        return NULL;
+    }
+
+    // Now process dict2 entries
+    for (size_t i = 0; i < dict2->alloc; ++i) {
+        fvdictNode* current = dict2->keyValues[i].next;
+        while (current) {
+            if (!current->key || !current->value || current->value->alloc_type != DYNAMIC) {
+                free_floatv_dict(merged);
+                errno = EPERM;
+                return NULL;
+            }
+
+            bool exists = has_key_floatv_dict(merged, current->key);
+            if (exists && !overwrite) {
+                current = current->next;
+                continue;
+            }
+
+            float_v* vec_copy = copy_float_vector(current->value);
+            if (!vec_copy) {
+                free_floatv_dict(merged);
+                return NULL; // errno set by copy_float_vector
+            }
+
+            if (exists) {
+                pop_floatv_dict(merged, current->key);
+            }
+
+            if (!insert_floatv_dict(merged, current->key, vec_copy)) {
+                free_float_vector(vec_copy);
+                free_floatv_dict(merged);
+                return NULL;
+            }
+
+            current = current->next;
+        }
+    }
+
+    return merged;
+}
 // ================================================================================ 
 // ================================================================================ 
 // eof

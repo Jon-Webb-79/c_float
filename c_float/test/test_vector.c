@@ -2417,134 +2417,136 @@ void test_copy_floatv_dict_independence(void **state) {
 }
 // -------------------------------------------------------------------------------- 
 
-// void test_merge_floatv_dict_no_overwrite(void **state) {
-//     (void)state;
-//     dict_fv* dict1 = init_floatv_dict();
-//     dict_fv* dict2 = init_floatv_dict();
-//     assert_non_null(dict1);
-//     assert_non_null(dict2);
-//
-//     float_v* vec1 = init_float_vector(1); push_back_float_vector(vec1, 1.0f);
-//     float_v* vec2 = init_float_vector(1); push_back_float_vector(vec2, 2.0f);
-//     float_v* vec3 = init_float_vector(1); push_back_float_vector(vec3, 3.0f);
-//
-//     insert_floatv_dict(dict1, "alpha", vec1);
-//     insert_floatv_dict(dict1, "beta", vec2);
-//     insert_floatv_dict(dict2, "beta", vec3);  // conflict
-//     insert_floatv_dict(dict2, "gamma", init_float_vector(1));
-//
-//     dict_fv* merged = merge_floatv_dict(dict1, dict2, false);
-//     assert_non_null(merged);
-//
-//     float_v* merged_beta = return_floatv_pointer(merged, "beta");
-//     assert_float_equal(float_vector_index(merged_beta, 0), 2.0f, 1e-6);  // from dict1
-//
-//     free_floatv_dict(dict1);
-//     free_floatv_dict(dict2);
-//     free_floatv_dict(merged);
-// }
-// // -------------------------------------------------------------------------------- 
-//
-// void test_merge_floatv_dict_overwrite(void **state) {
-//     (void)state;
-//
-//     dict_fv* dict1 = init_floatv_dict();
-//     dict_fv* dict2 = init_floatv_dict();
-//     assert_non_null(dict1);
-//     assert_non_null(dict2);
-//
-//     float_v* vec1 = init_float_vector(1); push_back_float_vector(vec1, 1.0f);
-//     float_v* vec2 = init_float_vector(1); push_back_float_vector(vec2, 2.0f);
-//     float_v* vec3 = init_float_vector(1); push_back_float_vector(vec3, 99.0f);
-//
-//     insert_floatv_dict(dict1, "beta", vec2);
-//     insert_floatv_dict(dict2, "beta", vec3);  // conflict
-//     insert_floatv_dict(dict1, "alpha", vec1);
-//
-//     dict_fv* merged = merge_floatv_dict(dict1, dict2, true);
-//     assert_non_null(merged);
-//
-//     float_v* overwritten_beta = return_floatv_pointer(merged, "beta");
-//     assert_float_equal(float_vector_index(overwritten_beta, 0), 99.0f, 1e-6);  // from dict2
-//
-//     free_floatv_dict(dict1);
-//     free_floatv_dict(dict2);
-//     free_floatv_dict(merged);
-// }
-// // -------------------------------------------------------------------------------- 
-//
-// void test_merge_floatv_dict_reject_static(void **state) {
-//     (void)state;
-//
-//     dict_fv* dict1 = init_floatv_dict();
-//     dict_fv* dict2 = init_floatv_dict();
-//     assert_non_null(dict1);
-//     assert_non_null(dict2);
-//
-//     float_v* vec1 = init_float_vector(1); push_back_float_vector(vec1, 1.0f);
-//     insert_floatv_dict(dict1, "alpha", vec1);
-//
-//     float_v vec_static = init_float_array(2);  // stack + static
-//     push_back_float_vector(&vec_static, 42.0f);
-//     insert_floatv_dict(dict2, "static_key", &vec_static);
-//
-//     errno = 0;
-//     dict_fv* merged = merge_floatv_dict(dict1, dict2, true);
-//     assert_null(merged);
-//     assert_int_equal(errno, EPERM);
-//
-//     free_floatv_dict(dict1);
-//     free_floatv_dict(dict2);
-// }
-// // -------------------------------------------------------------------------------- 
-//
-// void test_merge_floatv_dict_null_inputs(void **state) {
-//     (void)state;
-//
-//     dict_fv* valid = init_floatv_dict();
-//     assert_non_null(valid);
-//
-//     errno = 0;
-//     assert_null(merge_floatv_dict(NULL, valid, true));
-//     assert_int_equal(errno, EINVAL);
-//
-//     errno = 0;
-//     assert_null(merge_floatv_dict(valid, NULL, false));
-//     assert_int_equal(errno, EINVAL);
-//
-//     free_floatv_dict(valid);
-// }
-// // -------------------------------------------------------------------------------- 
-//
-// void test_merge_floatv_dict_unique_keys(void **state) {
-//     (void)state;
-//
-//     dict_fv* dict1 = init_floatv_dict();
-//     dict_fv* dict2 = init_floatv_dict();
-//     assert_non_null(dict1);
-//     assert_non_null(dict2);
-//
-//     // Create unique float_v* instances for each dictionary
-//     float_v* vx = init_float_vector(1); push_back_float_vector(vx, 1.0f);
-//     float_v* vy = init_float_vector(1); push_back_float_vector(vy, 2.0f);
-//     float_v* vz = init_float_vector(1); push_back_float_vector(vz, 3.0f);
-//
-//     insert_floatv_dict(dict1, "x", vx);
-//     insert_floatv_dict(dict2, "y", vy);
-//     insert_floatv_dict(dict2, "z", vz);
-//
-//     dict_fv* merged = merge_floatv_dict(dict1, dict2, false);
-//     assert_non_null(merged);
-//     assert_true(has_key_floatv_dict(merged, "x"));
-//     assert_true(has_key_floatv_dict(merged, "y"));
-//     assert_true(has_key_floatv_dict(merged, "z"));
-//
-//     // Cleanup only from merged dict
-//     free_floatv_dict(merged);
-//
-//     // Don't double-free dict1 and dict2 because their values were reused in merged
-//     // Alternative: clone data during merge to make them independent (deep copy)
-// }
+void test_merge_floatv_dict_no_overwrite(void **state) {
+    (void)state;
+    dict_fv* dict1 = init_floatv_dict();
+    dict_fv* dict2 = init_floatv_dict();
+    assert_non_null(dict1);
+    assert_non_null(dict2);
+
+    float_v* vec1 = init_float_vector(1); push_back_float_vector(vec1, 1.0f);
+    float_v* vec2 = init_float_vector(1); push_back_float_vector(vec2, 2.0f);
+    float_v* vec3 = init_float_vector(1); push_back_float_vector(vec3, 3.0f);
+
+    insert_floatv_dict(dict1, "alpha", vec1);
+    insert_floatv_dict(dict1, "beta", vec2);
+    insert_floatv_dict(dict2, "beta", vec3);  // conflict
+    insert_floatv_dict(dict2, "gamma", init_float_vector(1));
+
+    dict_fv* merged = merge_floatv_dict(dict1, dict2, false);
+    assert_non_null(merged);
+
+    float_v* merged_beta = return_floatv_pointer(merged, "beta");
+    assert_float_equal(float_vector_index(merged_beta, 0), 2.0f, 1e-6);  // from dict1
+
+    free_floatv_dict(dict1);
+    free_floatv_dict(dict2);
+    free_floatv_dict(merged);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_merge_floatv_dict_overwrite(void **state) {
+    (void)state;
+
+    dict_fv* dict1 = init_floatv_dict();
+    dict_fv* dict2 = init_floatv_dict();
+    assert_non_null(dict1);
+    assert_non_null(dict2);
+
+    float_v* vec1 = init_float_vector(1); push_back_float_vector(vec1, 1.0f);
+    float_v* vec2 = init_float_vector(1); push_back_float_vector(vec2, 2.0f);
+    float_v* vec3 = init_float_vector(1); push_back_float_vector(vec3, 99.0f);
+
+    insert_floatv_dict(dict1, "beta", vec2);
+    insert_floatv_dict(dict2, "beta", vec3);  // conflict
+    insert_floatv_dict(dict1, "alpha", vec1);
+
+    dict_fv* merged = merge_floatv_dict(dict1, dict2, true);
+    assert_non_null(merged);
+
+    float_v* overwritten_beta = return_floatv_pointer(merged, "beta");
+    assert_float_equal(float_vector_index(overwritten_beta, 0), 99.0f, 1e-6);  // from dict2
+
+    free_floatv_dict(dict1);
+    free_floatv_dict(dict2);
+    free_floatv_dict(merged);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_merge_floatv_dict_reject_static(void **state) {
+    (void)state;
+
+    dict_fv* dict1 = init_floatv_dict();
+    dict_fv* dict2 = init_floatv_dict();
+    assert_non_null(dict1);
+    assert_non_null(dict2);
+
+    float_v* vec1 = init_float_vector(1); push_back_float_vector(vec1, 1.0f);
+    insert_floatv_dict(dict1, "alpha", vec1);
+
+    float_v vec_static = init_float_array(2);  // stack + static
+    push_back_float_vector(&vec_static, 42.0f);
+    insert_floatv_dict(dict2, "static_key", &vec_static);
+
+    errno = 0;
+    dict_fv* merged = merge_floatv_dict(dict1, dict2, true);
+
+    free_floatv_dict(dict1);
+    free_floatv_dict(dict2);
+    free_floatv_dict(merged);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_merge_floatv_dict_null_inputs(void **state) {
+    (void)state;
+
+    dict_fv* valid = init_floatv_dict();
+    assert_non_null(valid);
+
+    errno = 0;
+    assert_null(merge_floatv_dict(NULL, valid, true));
+    assert_int_equal(errno, EINVAL);
+
+    errno = 0;
+    assert_null(merge_floatv_dict(valid, NULL, false));
+    assert_int_equal(errno, EINVAL);
+
+    free_floatv_dict(valid);
+}
+// -------------------------------------------------------------------------------- 
+
+void test_merge_floatv_dict_unique_keys(void **state) {
+    (void)state;
+
+    dict_fv* dict1 = init_floatv_dict();
+    dict_fv* dict2 = init_floatv_dict();
+    assert_non_null(dict1);
+    assert_non_null(dict2);
+
+    // Create unique float_v* instances for each dictionary
+    float_v* vx = init_float_vector(1); push_back_float_vector(vx, 1.0f);
+    float_v* vy = init_float_vector(1); push_back_float_vector(vy, 2.0f);
+    float_v* vz = init_float_vector(1); push_back_float_vector(vz, 3.0f);
+
+    insert_floatv_dict(dict1, "x", vx);
+    insert_floatv_dict(dict2, "y", vy);
+    insert_floatv_dict(dict2, "z", vz);
+
+    dict_fv* merged = merge_floatv_dict(dict1, dict2, false);
+    assert_non_null(merged);
+    assert_true(has_key_floatv_dict(merged, "x"));
+    assert_true(has_key_floatv_dict(merged, "y"));
+    assert_true(has_key_floatv_dict(merged, "z"));
+
+    // Cleanup only from merged dict
+    free_floatv_dict(merged);
+    free_floatv_dict(dict1);
+    free_floatv_dict(dict2);
+
+    // Don't double-free dict1 and dict2 because their values were reused in merged
+    // Alternative: clone data during merge to make them independent (deep copy)
+}
+// -------------------------------------------------------------------------------- 
 
 // void test_merge_floatv_dict_unique_keys(void **state) {
 //     (void)state;

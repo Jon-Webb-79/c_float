@@ -381,19 +381,19 @@ void test_copy_floatv_dict_multiple_entries(void **state);
 void test_copy_floatv_dict_independence(void **state);
 // -------------------------------------------------------------------------------- 
 
-// void test_merge_floatv_dict_no_overwrite(void **state);
-// // -------------------------------------------------------------------------------- 
-//
-// void test_merge_floatv_dict_overwrite(void **state);
-// // -------------------------------------------------------------------------------- 
-//
-// void test_merge_floatv_dict_reject_static(void **state);
-// // -------------------------------------------------------------------------------- 
-//
-// void test_merge_floatv_dict_null_inputs(void **state);
-// // -------------------------------------------------------------------------------- 
-//
-// void test_merge_floatv_dict_unique_keys(void **state);
+void test_merge_floatv_dict_no_overwrite(void **state);
+// -------------------------------------------------------------------------------- 
+
+void test_merge_floatv_dict_overwrite(void **state);
+// -------------------------------------------------------------------------------- 
+
+void test_merge_floatv_dict_reject_static(void **state);
+// -------------------------------------------------------------------------------- 
+
+void test_merge_floatv_dict_null_inputs(void **state);
+// -------------------------------------------------------------------------------- 
+
+void test_merge_floatv_dict_unique_keys(void **state);
 // ================================================================================ 
 // ================================================================================ 
 #endif /* test_H */

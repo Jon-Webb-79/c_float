@@ -779,7 +779,7 @@ dict_fv* copy_floatv_dict(const dict_fv* original);
  * @param overwrite true if the values should be overwritten, false otherwise
  * @return A merged dictionary
  */
-// dict_fv* merge_floatv_dict(const dict_fv* dict1, const dict_fv* dict2, bool overwrite);
+dict_fv* merge_floatv_dict(const dict_fv* dict1, const dict_fv* dict2, bool overwrite);
 // ================================================================================ 
 // ================================================================================ 
 // GENERIC MACROS
