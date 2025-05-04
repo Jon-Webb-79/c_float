@@ -2004,6 +2004,32 @@ bool foreach_floatv_dict(const dict_fv* dict, dict_fv_iterator iter, void* user_
 
     return true;
 }
+// -------------------------------------------------------------------------------- 
+
+string_v* get_keys_floatv_dict(const dict_fv* dict) {
+    if (!dict) {
+        errno = EINVAL;
+        return NULL;
+    }
+
+    string_v* vec = init_str_vector(dict->hash_size);
+    if (!vec) {
+        errno = ENOMEM;
+        return NULL;
+    }
+
+    for (size_t i = 0; i < dict->alloc; ++i) {
+        for (fvdictNode* current = dict->keyValues[i].next; current; current = current->next) {
+            if (!push_back_str_vector(vec, current->key)) {
+                free_str_vector(vec);
+                errno = ENOMEM;
+                return NULL;
+            }
+        }
+    }
+
+    return vec;
+}
 // ================================================================================ 
 // ================================================================================ 
 // eof

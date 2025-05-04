@@ -455,3 +455,340 @@ float_dictv_hash_size
        Buckets used:    2
        Total entries:   2
 
+merge_floatv_dict
+~~~~~~~~~~~~~~~~~
+.. c:function:: dict_fv* merge_floatv_dict(const dict_fv* dict1, const dict_fv* dict2, bool overwrite)
+
+   Merges two float vector dictionaries into a new dictionary. The resulting dictionary 
+   contains all key-vector pairs from both input dictionaries. If a key exists in both:
+
+   - If ``overwrite`` is ``true``, the vector from ``dict2`` replaces the vector from ``dict1``.
+   - If ``overwrite`` is ``false``, the vector from ``dict1`` is preserved.
+
+   All vectors are deep copied. Neither input dictionary is modified.
+
+   :param dict1: First dictionary to merge
+   :param dict2: Second dictionary to merge
+   :param overwrite: Determines whether values from ``dict2`` replace existing keys in ``dict1``
+   :returns: Newly allocated merged dictionary, or NULL on error
+   :raises: Sets errno to EINVAL if inputs are NULL, EPERM if non-dynamic vectors are found, or ENOMEM
+
+   Example:
+
+   .. code-block:: c
+
+      dict_fv* dict1 = init_floatv_dict();
+      dict_fv* dict2 = init_floatv_dict();
+
+      float_v* vec1 = init_float_vector(1);
+      float_v* vec2 = init_float_vector(1);
+      push_back_float_vector(vec1, 3.14f);
+      push_back_float_vector(vec2, 6.28f);
+
+      insert_floatv_dict(dict1, "value", vec1);
+      insert_floatv_dict(dict2, "value", vec2);
+
+      dict_fv* merged = merge_floatv_dict(dict1, dict2, true);
+
+      float_v* result = return_floatv_pointer(merged, "value");
+      printf("Merged value: %.2f\n", float_vector_index(result, 0));
+
+      free_floatv_dict(dict1);
+      free_floatv_dict(dict2);
+      free_floatv_dict(merged);
+
+   Output::
+
+      Merged value: 6.28
+
+   Notes:
+
+   - This function guarantees deep copies of all vectors.
+   - Caller is responsible for freeing the merged dictionary.
+   - All vectors must be dynamically allocated.
+
+clear_floatv_dict
+~~~~~~~~~~~~~~~~~
+.. c:function:: void clear_floatv_dict(dict_fv* dict)
+
+   Removes all key-vector pairs from the dictionary without deallocating the dictionary structure itself.
+   This operation is useful when reusing the same dictionary after clearing its contents.
+
+   :param dict: Dictionary to clear
+   :raises: Sets errno to EINVAL if the input is NULL
+
+   Example:
+
+   .. code-block:: c
+
+      dict_fv* dict = init_floatv_dict();
+      create_floatv_dict(dict, "temperature", 3);
+      create_floatv_dict(dict, "pressure", 2);
+
+      printf("Before clear: %zu keys\n", float_dictv_hash_size(dict));
+
+      clear_floatv_dict(dict);
+
+      printf("After clear: %zu keys\n", float_dictv_hash_size(dict));
+
+      free_floatv_dict(dict);
+
+   Output::
+
+      Before clear: 2 keys
+      After clear: 0 keys
+
+   Notes:
+
+   - All vectors and keys are freed.
+   - The dictionary is reusable after this operation.
+
+copy_floatv_dict
+~~~~~~~~~~~~~~~~
+.. c:function:: dict_fv* copy_floatv_dict(const dict_fv* original)
+
+   Creates a deep copy of a float vector dictionary. Each vector in the copy is a
+   newly allocated clone of the original vector.
+
+   :param original: Dictionary to copy
+   :returns: A newly allocated dictionary containing deep copies of all entries
+   :raises: Sets errno to EINVAL if input is NULL, or ENOMEM if memory allocation fails
+
+   Example:
+
+   .. code-block:: c
+
+      dict_fv* original = init_floatv_dict();
+      float_v* vec = init_float_vector(1);
+      push_back_float_vector(vec, 9.81f);
+      insert_floatv_dict(original, "gravity", vec);
+
+      dict_fv* copy = copy_floatv_dict(original);
+
+      float_v* copied_vec = return_floatv_pointer(copy, "gravity");
+      printf("Copied value: %.2f\n", float_vector_index(copied_vec, 0));
+
+      free_floatv_dict(original);
+      free_floatv_dict(copy);
+
+   Output::
+
+      Copied value: 9.81
+
+   Notes:
+
+   - The copied dictionary is independent of the original.
+   - Useful for isolating dictionary state across function calls or processing steps.
+
+has_key_floatv_dict
+~~~~~~~~~~~~~~~~~~~
+.. c:function:: bool has_key_floatv_dict(const dict_fv* dict, const char* key)
+
+   Checks if a given key exists in the float vector dictionary.
+
+   :param dict: Dictionary to query
+   :param key: Key string to look for
+   :returns: true if key exists, false otherwise
+   :raises: Sets errno to EINVAL for NULL inputs
+
+   Example:
+
+   .. code-block:: c
+
+      dict_fv* dict = init_floatv_dict();
+      create_floatv_dict(dict, "velocity", 10);
+
+      if (has_key_floatv_dict(dict, "velocity")) {
+          printf("Found 'velocity'\n");
+      }
+
+      if (!has_key_floatv_dict(dict, "altitude")) {
+          printf("'altitude' not found\n");
+      }
+
+      free_floatv_dict(dict);
+
+   Output::
+
+      Found 'velocity'
+      'altitude' not found
+
+   Notes:
+
+   - This function does not retrieve or modify the vector.
+   - Can be used to check for key presence before insertion or access.
+
+Iterator Support
+----------------
+
+dict_fv_iterator
+~~~~~~~~~~~~~~~~
+.. c:type:: void (*dict_fv_iterator)(const char* key, const float_v* value, void* user_data)
+
+   Function type for float vector dictionary iteration callbacks.
+
+   :param key: Current key being visited
+   :param value: Pointer to the associated float_v vector
+   :param user_data: Optional user-provided context data
+
+foreach_floatv_dict
+~~~~~~~~~~~~~~~~~~~
+.. c:function:: bool foreach_floatv_dict(const dict_fv* dict, dict_fv_iterator iter, void* user_data)
+
+   Iterates over all key-vector pairs in the dictionary, calling the provided
+   callback function for each entry.
+
+   :param dict: Target float vector dictionary
+   :param iter: Iterator callback function
+   :param user_data: Optional user context data passed to the callback
+   :returns: true if iteration completes successfully, false on error
+   :raises: Sets errno to EINVAL if dict or iter is NULL
+
+   Example:
+
+   .. code-block:: c
+
+      void print_vector_entry(const char* key, const float_v* vec, void* user_data) {
+          printf("%s: [", key);
+          for (size_t i = 0; i < f_size(vec); ++i) {
+              printf("%.2f%s", float_vector_index(vec, i), (i < f_size(vec) - 1) ? ", " : "");
+          }
+          printf("]\n");
+      }
+
+      dict_fv* dict = init_floatv_dict();
+      float_v* vec1 = init_float_vector(3);
+      push_back_float_vector(vec1, 1.1f);
+      push_back_float_vector(vec1, 2.2f);
+      push_back_float_vector(vec1, 3.3f);
+      insert_floatv_dict(dict, "set1", vec1);
+
+      float_v* vec2 = init_float_vector(2);
+      push_back_float_vector(vec2, 4.4f);
+      push_back_float_vector(vec2, 5.5f);
+      insert_floatv_dict(dict, "set2", vec2);
+
+      printf("Dictionary contents:\n");
+      foreach_floatv_dict(dict, print_vector_entry, NULL);
+      free_floatv_dict(dict);
+
+   Output::
+
+      Dictionary contents:
+      set1: [1.10, 2.20, 3.30]
+      set2: [4.40, 5.50]
+
+   Example with data aggregation:
+
+   .. code-block:: c
+
+      typedef struct {
+          float total_sum;
+          size_t total_count;
+      } agg_data;
+
+      void sum_elements(const char* key, const float_v* vec, void* user_data) {
+          agg_data* stats = (agg_data*)user_data;
+          for (size_t i = 0; i < f_size(vec); ++i) {
+              stats->total_sum += float_vector_index(vec, i);
+              stats->total_count++;
+          }
+      }
+
+      dict_fv* dict = init_floatv_dict();
+      float_v* vec = init_float_vector(4);
+      for (float i = 0; i < 4.0f; i++)
+          push_back_float_vector(vec, i);
+      insert_floatv_dict(dict, "numbers", vec);
+
+      agg_data stats = {0};
+      foreach_floatv_dict(dict, sum_elements, &stats);
+      printf("Sum: %.2f, Count: %zu\n", stats.total_sum, stats.total_count);
+      free_floatv_dict(dict);
+
+   Output::
+
+      Sum: 6.00, Count: 4
+
+   Example with error handling:
+
+   .. code-block:: c
+
+      bool safe_iteration(dict_fv* dict, dict_fv_iterator iter, void* user_data) {
+          if (!foreach_floatv_dict(dict, iter, user_data)) {
+              if (errno == EINVAL) {
+                  fprintf(stderr, "Invalid dictionary or iterator\n");
+              }
+              return false;
+          }
+          return true;
+      }
+
+      void dummy_iter(const char* key, const float_v* vec, void* user_data) {}
+
+      int main(void) {
+          dict_fv* dict = init_floatv_dict();
+          insert_floatv_dict(dict, "test", init_float_vector(1));
+
+          safe_iteration(NULL, dummy_iter, NULL);  // NULL dictionary
+          safe_iteration(dict, NULL, NULL);        // NULL iterator
+
+          free_floatv_dict(dict);
+          return 0;
+      }
+
+   Output::
+
+      Invalid dictionary or iterator
+      Invalid dictionary or iterator
+
+   Notes:
+
+   - The callback function is invoked once for each key-vector pair.
+   - The `user_data` parameter can be used to accumulate statistics or context.
+
+get_keys_floatv_dict
+~~~~~~~~~~~~~~~~~~~~
+.. c:function:: string_v* get_keys_floatv_dict(const dict_fv* dict)
+
+   Returns a ``string_v`` object containing all keys from a float vector dictionary.
+   Each key maps to a dynamically allocated ``float_v`` array in the original dictionary.
+
+   The developer must include the ``c_string.h`` header file to use the ``string_v`` type.
+   A full description of the ``string_v`` object can be found at 
+   `C String Library <https://c-string.readthedocs.io/en/latest/>`_.
+
+   :param dict: Target float vector dictionary
+   :returns: Vector containing all keys, or NULL on error
+   :raises: Sets errno to EINVAL for NULL input, or ENOMEM for memory allocation failure
+
+   Example:
+
+   .. code-block:: c
+
+      #include "c_float.h"
+      #include "c_string.h"
+
+      dict_fv* dict = init_floatv_dict();
+      create_floatv_dict(dict, "One", 3);
+      create_floatv_dict(dict, "Two", 3);
+      create_floatv_dict(dict, "Three", 3);
+      create_floatv_dict(dict, "Four", 3);
+
+      string_v* keys = get_keys_floatv_dict(dict);
+
+      printf("Vector has %zu indices\n", s_size(keys));
+      printf("[ ");
+      for (size_t i = 0; i < s_size(keys) - 1; i++) {
+          printf("%s, ", str_vector_index(keys, i));
+      }
+      printf("%s ]\n", str_vector_index(keys, s_size(keys) - 1));
+
+      free_floatv_dict(dict);
+      free_str_vector(keys);
+
+   Example output::
+
+      Vector has 4 indices
+      [ One, Two, Three, Four ]
+

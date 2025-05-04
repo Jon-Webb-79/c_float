@@ -811,6 +811,9 @@ typedef void (*dict_fv_iterator)(const char* key, const float_v* value, void* us
  * @return true on success, false if dict or iter is NULL (errno set to EINVAL)
  */
 bool foreach_floatv_dict(const dict_fv* dict, dict_fv_iterator iter, void* user_data);
+// -------------------------------------------------------------------------------- 
+
+string_v* get_keys_floatv_dict(const dict_fv* dict);
 // ================================================================================ 
 // ================================================================================ 
 // GENERIC MACROS
