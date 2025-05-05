@@ -199,7 +199,7 @@ After installation, you can use the library in three ways:
 
 3. **Direct Integration**:
 
-  Copy ``c_float.c`` and ``c_float.h`` directly into your project.
+  Copy ``c_float.c`` and ``c_float.h`` directly into your project along with ``c_string.c`` and ``c_string.h``.
 
 Troubleshooting
 ---------------

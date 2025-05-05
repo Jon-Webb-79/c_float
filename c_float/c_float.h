@@ -94,6 +94,15 @@ float_v* init_float_vector(size_t buffer);
  */
 #define init_float_array(size) \
     ((float_v){.data = (float[size]){0}, .len = 0, .alloc = size, .alloc_type = STATIC})
+// -------------------------------------------------------------------------------- 
+
+/**
+ * @brief returns a c style pointer to the beginning of an array 
+ *
+ * @param vec A pointer to a float_v data type 
+ * @return A pointer to the beginning of a float array
+ */
+float* c_float_ptr(float_v* vec);
 // --------------------------------------------------------------------------------
 
 /**

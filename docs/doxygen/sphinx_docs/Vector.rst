@@ -1032,6 +1032,45 @@ length of float containers.
 
 .. _float-size-func:
 
+c_float_ptr 
+~~~~~~~~~~~~
+.. c:function:: float* c_float_ptr(float_v* vec)
+
+   Returns a pointer to the beginning of the float array.  Generally 
+   speaking, it is frowned upon to directly access data within the vector; 
+   however, this supports integration with many legacy C libraries where the 
+   array is passed as a pointer and the bounds is controlled by a size variable.
+
+   :param vec: A pointer to a double_v data type 
+   :returns: A pointer to a s style raw array 
+   :raises: EINVAL for NULL input pointer or NULL data pointer.
+
+   Example:
+
+   .. code-block:: c 
+
+      void print_data(float* array, size_t len) {
+          printf("[ ");
+          for (size_t i = 0; i < len - 1; i++) {
+              printf("%f, ", array[i]);
+          }
+          printf("%f ]");
+      }
+
+      int main() {
+          float_v* vec = init_float_vector(3);
+          push_back_float_vector(vec, 1.0);
+          push_back_float_vector(vec, 2.0);
+          push_back_float_vector(vec, 3.0);
+          print_data(vec, float_vector_size(vec));
+          free_float_vector(vec);
+          return 0;
+      }
+
+   .. code-block:: bash 
+
+      [ 1.0000, 2.0000, 3.0000 ]
+
 float_vector_size
 ~~~~~~~~~~~~~~~~~
 .. c:function:: const size_t float_vector_size(const float_v* vec)

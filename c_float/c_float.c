@@ -58,6 +58,15 @@ float_v* init_float_vector(size_t buff) {
     struct_ptr->alloc_type = DYNAMIC;
     return struct_ptr;
 }
+// -------------------------------------------------------------------------------- 
+
+float* c_float_ptr(float_v* vec) {
+    if (!vec || !vec->data) {
+        errno = EINVAL;
+        return NULL;
+    }
+    return vec->data;
+}
 // --------------------------------------------------------------------------------
 
 void free_float_vector(float_v* vec) {
